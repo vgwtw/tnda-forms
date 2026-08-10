@@ -19,57 +19,60 @@ const ENDPOINT = '';
 
 
 /* ② ─── 人 ────────────────────────────────────────────────────
-   一人一列。系統內部一律用 id 串資料，姓名只負責顯示，
-   所以**同名同姓不會互相污染**。
+   一人一列。系統內部一律用 id 串資料，所以**同名同姓不會互相污染**。
 
-     id   學員編號。就用名牌／桌牌上印的那個號碼，全場唯一、之後不要改。
+     id   編號。就用名牌／桌牌上印的那個號碼，全場唯一、之後不要改。
           （改了等於換一個人，已收的資料會對不上。）
-     name 顯示用姓名。可以重複。
      d1   Day1 分組，發表與同儕評價用，一組 15 人。
      d2   Day2 分組，一組 3 人。Day1 結束後才編得出來——
           當天可以整欄留空字串，隔天填完存檔重新上架即可。
 
+   ⚠️ **這裡沒有姓名，是刻意的。** 這個 repo 是公開的，真實姓名放進來
+   等於把個資放上網。姓名存在 Google 試算表的 `roster` 分頁，
+   由儀表板的「名單」分頁輸入，各頁載入時自動套用。
+   姓名還沒載入前，畫面上一律顯示編號。
+
    組別清單會自動從這張表推出來，不用另外維護。 */
 
 const STUDENTS = [
-  { id: '01', name: '學員01', d1: 'A 組', d2: 'T01' },
-  { id: '02', name: '學員02', d1: 'A 組', d2: 'T02' },
-  { id: '03', name: '學員03', d1: 'A 組', d2: 'T03' },
-  { id: '04', name: '學員04', d1: 'A 組', d2: 'T04' },
-  { id: '05', name: '學員05', d1: 'A 組', d2: 'T05' },
-  { id: '06', name: '學員06', d1: 'A 組', d2: 'T06' },
-  { id: '07', name: '學員07', d1: 'A 組', d2: 'T01' },
-  { id: '08', name: '學員08', d1: 'A 組', d2: 'T07' },
-  { id: '09', name: '學員09', d1: 'A 組', d2: 'T08' },
-  { id: '10', name: '學員10', d1: 'A 組', d2: 'T09' },
-  { id: '11', name: '學員11', d1: 'A 組', d2: 'T02' },
-  { id: '12', name: '學員12', d1: 'A 組', d2: 'T06' },
-  { id: '13', name: '學員13', d1: 'A 組', d2: 'T04' },
-  { id: '14', name: '學員14', d1: 'A 組', d2: 'T10' },
-  { id: '15', name: '學員15', d1: 'A 組', d2: 'T08' },
-  { id: '16', name: '學員16', d1: 'B 組', d2: 'T03' },
-  { id: '17', name: '學員17', d1: 'B 組', d2: 'T09' },
-  { id: '18', name: '學員18', d1: 'B 組', d2: 'T05' },
-  { id: '19', name: '學員19', d1: 'B 組', d2: 'T01' },
-  { id: '20', name: '學員20', d1: 'B 組', d2: 'T07' },
-  { id: '21', name: '學員21', d1: 'B 組', d2: 'T04' },
-  { id: '22', name: '學員22', d1: 'B 組', d2: 'T08' },
-  { id: '23', name: '學員23', d1: 'B 組', d2: 'T02' },
-  { id: '24', name: '學員24', d1: 'B 組', d2: 'T10' },
-  { id: '25', name: '學員25', d1: 'B 組', d2: 'T07' },
-  { id: '26', name: '學員26', d1: 'B 組', d2: 'T05' },
-  { id: '27', name: '學員27', d1: 'B 組', d2: 'T10' },
-  { id: '28', name: '學員28', d1: 'B 組', d2: 'T03' },
-  { id: '29', name: '學員29', d1: 'B 組', d2: 'T09' },
-  { id: '30', name: '學員30', d1: 'B 組', d2: 'T06' },
+  { id: '01', d1: 'A 組', d2: 'T01' },
+  { id: '02', d1: 'A 組', d2: 'T02' },
+  { id: '03', d1: 'A 組', d2: 'T03' },
+  { id: '04', d1: 'A 組', d2: 'T04' },
+  { id: '05', d1: 'A 組', d2: 'T05' },
+  { id: '06', d1: 'A 組', d2: 'T06' },
+  { id: '07', d1: 'A 組', d2: 'T01' },
+  { id: '08', d1: 'A 組', d2: 'T07' },
+  { id: '09', d1: 'A 組', d2: 'T08' },
+  { id: '10', d1: 'A 組', d2: 'T09' },
+  { id: '11', d1: 'A 組', d2: 'T02' },
+  { id: '12', d1: 'A 組', d2: 'T06' },
+  { id: '13', d1: 'A 組', d2: 'T04' },
+  { id: '14', d1: 'A 組', d2: 'T10' },
+  { id: '15', d1: 'A 組', d2: 'T08' },
+  { id: '16', d1: 'B 組', d2: 'T03' },
+  { id: '17', d1: 'B 組', d2: 'T09' },
+  { id: '18', d1: 'B 組', d2: 'T05' },
+  { id: '19', d1: 'B 組', d2: 'T01' },
+  { id: '20', d1: 'B 組', d2: 'T07' },
+  { id: '21', d1: 'B 組', d2: 'T04' },
+  { id: '22', d1: 'B 組', d2: 'T08' },
+  { id: '23', d1: 'B 組', d2: 'T02' },
+  { id: '24', d1: 'B 組', d2: 'T10' },
+  { id: '25', d1: 'B 組', d2: 'T07' },
+  { id: '26', d1: 'B 組', d2: 'T05' },
+  { id: '27', d1: 'B 組', d2: 'T10' },
+  { id: '28', d1: 'B 組', d2: 'T03' },
+  { id: '29', d1: 'B 組', d2: 'T09' },
+  { id: '30', d1: 'B 組', d2: 'T06' },
 ];
 
 /* 業師同樣用 id。 */
 const MENTORS = [
-  { id: 'M1', name: 'TONY' },
-  { id: 'M2', name: 'EERON' },
-  { id: 'M3', name: 'G刃' },
-  { id: 'M4', name: '業師 丁' },
+  { id: 'M1' },
+  { id: 'M2' },
+  { id: 'M3' },
+  { id: 'M4' },
 ];
 
 
@@ -488,16 +491,17 @@ const SCORING = [
 /* ─── 以下不用改：由上面的名單推導 ────────────────────────── */
 
 const PEOPLE = {};
-STUDENTS.forEach((s) => { PEOPLE[s.id] = Object.assign({ role: 'student' }, s); });
-MENTORS.forEach((m) => { PEOPLE[m.id] = Object.assign({ role: 'mentor' }, m); });
+STUDENTS.forEach((s) => { PEOPLE[s.id] = Object.assign({ role: 'student', name: '' }, s); });
+MENTORS.forEach((m) => { PEOPLE[m.id] = Object.assign({ role: 'mentor', name: '' }, m); });
 
 /** 同名同姓時，顯示名稱後面補上編號，讓人挑得出自己是哪一個。 */
 const DUP = {};
-STUDENTS.forEach((s) => { DUP[s.name] = (DUP[s.name] || 0) + 1; });
 
 function recountDup() {
   Object.keys(DUP).forEach((k) => delete DUP[k]);
-  STUDENTS.forEach((s) => { DUP[s.name] = (DUP[s.name] || 0) + 1; });
+  Object.values(PEOPLE).forEach((p) => {
+    if (p.name) DUP[p.name] = (DUP[p.name] || 0) + 1;
+  });
 }
 
 /** 儀表板改過的姓名。工作人員在儀表板編輯後存到後端，
@@ -509,19 +513,22 @@ function applyNames(map) {
     const nm = String(map[id] || '').trim();
     if (!nm || !PEOPLE[id]) return;
     PEOPLE[id].name = nm;
-    const s = STUDENTS.find((x) => x.id === id);
-    if (s) s.name = nm;
   });
   recountDup();
 }
 
 const person = (id) => PEOPLE[id] || null;
-const nameOf = (id) => (PEOPLE[id] ? PEOPLE[id].name : id);
+const hasName = (id) => !!(PEOPLE[id] && PEOPLE[id].name);
+/** 姓名還沒從試算表載入時一律顯示編號——寧可顯示號碼，也不要空白。 */
+const nameOf = (id) => (PEOPLE[id] && PEOPLE[id].name) ? PEOPLE[id].name : id;
 const labelOf = (id) => {
   const p = PEOPLE[id];
-  if (!p) return id;
+  if (!p || !p.name) return id;
   return DUP[p.name] > 1 ? p.name + '（' + p.id + '）' : p.name;
 };
+/** 全部人都有名字了嗎。沒有的話各頁會提示「名單還沒載入」。 */
+const namesReady = () => Object.values(PEOPLE).every((p) => !!p.name);
+const missingNames = () => Object.values(PEOPLE).filter((p) => !p.name).map((p) => p.id);
 
 const uniq = (xs) => xs.filter((x, i) => x && xs.indexOf(x) === i);
 const d1Groups = () => uniq(STUDENTS.map((s) => s.d1));
@@ -536,22 +543,21 @@ const isKnown = (id) => !!PEOPLE[id];
  *  同一個人，而且錯得很安靜，所以寧可在畫面上擋著也不要讓它跑下去。 */
 function problems() {
   const out = [], seen = {};
-  const all = STUDENTS.concat(MENTORS);
-  all.forEach((p, i) => {
-    const where = p.name ? '「' + p.name + '」' : '第 ' + (i + 1) + ' 列';
-    if (!p.id && p.id !== 0) out.push(where + ' 沒有編號');
-    else if (seen[p.id]) out.push('編號 ' + p.id + ' 重複了：' + seen[p.id] + ' 與 ' + (p.name || '(未命名)'));
-    else seen[p.id] = p.name || '(未命名)';
-    if (!p.name) out.push('編號 ' + p.id + ' 沒有姓名');
+  STUDENTS.concat(MENTORS).forEach((p, i) => {
+    if (!p.id && p.id !== 0) out.push('第 ' + (i + 1) + ' 列沒有編號');
+    else if (seen[p.id]) out.push('編號 ' + p.id + ' 重複了');
+    else seen[p.id] = true;
   });
   STUDENTS.forEach((s) => { if (!s.d1) out.push('編號 ' + s.id + ' 沒有 Day1 組別'); });
-  // d2 允許留空——Day1 當天還編不出來，那是正常狀態，不算錯。
+  // 姓名不在這裡檢查——它存在試算表，由 namesReady() 另外提示。
+  // d2 允許留空：Day1 當天還編不出來，那是正常狀態。
   return out;
 }
 
 return {
   ENDPOINT, STUDENTS, MENTORS, FORMS, SCORING, SCHEDULE, CARDS,
   person, nameOf, labelOf, isKnown, problems, applyNames,
+  hasName, namesReady, missingNames,
   d1Groups, d2Teams, studentsIn, teamMembers,
   allStudentIds: () => STUDENTS.map((s) => s.id),
   allMentorIds: () => MENTORS.map((m) => m.id),

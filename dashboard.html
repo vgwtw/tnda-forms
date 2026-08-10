@@ -769,12 +769,34 @@ function renderStatus() {
 /* ── 名單 ──────────────────────────────────────────────── */
 function renderRoster() {
   const p = $('pane-roster');
-  p.innerHTML = '<h2 class="sec">編輯學生姓名</h2>' +
-    '<p class="lede">報名時打錯、後來改名、或想改成大家平常叫的名字，都在這裡改。' +
-    '改完存檔後，<b>所有裝置</b>（學員的表單頁、業師的流程頁、這個儀表板）下次開啟就會用新名字。</p>' +
+  const missing = T.missingNames().length;
+
+  const row = (id, extra) =>
+    '<tr><td class="num">' + esc(id) + '</td>' +
+    '<td><input class="field" data-id="' + esc(id) + '" value="' + esc(T.hasName(id) ? T.nameOf(id) : '') + '" ' +
+      'placeholder="（尚未輸入）" style="padding:7px 9px;font-weight:700"></td>' + extra + '</tr>';
+
+  p.innerHTML = '<h2 class="sec">名單</h2>' +
+    '<p class="lede"><b>姓名只存在 Google 試算表，不在網站原始碼裡</b>——' +
+    'repo 是公開的，真名放進去等於把個資放上網。這一頁是唯一輸入姓名的地方，' +
+    '存檔後<b>所有裝置</b>（學員的表單頁、業師的流程頁、這個儀表板）下次開啟就會套用。</p>' +
+    (missing
+      ? '<div class="msg err"><b>還有 ' + missing + ' 個人沒有姓名</b>，' +
+        '各頁現在顯示的是編號。用下面的「整批貼上」最快。</div>'
+      : '<div class="msg">名單齊全，' + (T.STUDENTS.length + T.MENTORS.length) + ' 個人都有姓名。</div>') +
+
+    '<h2 class="sec">整批貼上</h2>' +
+    '<p class="lede">從報名表的姓名欄直接複製一整欄貼進來，<b>一行一個、照編號順序</b>' +
+    '（第 1 行＝編號 ' + esc(T.STUDENTS[0].id) + '，共 ' + T.STUDENTS.length + ' 位學員）。' +
+    '貼上只會填進下面的表格，還要按儲存才會寫進試算表。</p>' +
+    '<textarea class="field" id="rs-bulk" style="min-height:120px" ' +
+      'placeholder="王小明&#10;陳怡君&#10;…"></textarea>' +
+    '<div class="row-actions"><button class="btn inline" id="rs-fill">填進表格</button></div>' +
+
+    '<h2 class="sec">逐一確認</h2>' +
     '<div class="warnbox"><b>只能改姓名，不能改編號。</b>編號是所有資料的鍵——' +
     '同儕評價、評分表、分組全部靠它串起來，改了等於換一個人，已收的資料會對不上。' +
-    '真的要換人，請改 <code>config.js</code> 並重新上架。</div>' +
+    '要換人或調分組，請改 <code>config.js</code> 並重新上架。</div>' +
     '<div class="row-actions">' +
       '<button class="btn primary inline" id="rs-save">儲存到試算表</button>' +
       '<button class="btn ghost inline" id="rs-reset">還原這一頁的修改</button>' +
@@ -782,15 +804,26 @@ function renderRoster() {
     '</div>' +
     '<div class="scroll" style="margin-top:14px"><table><thead><tr>' +
     '<th>編號</th><th>姓名</th><th>D1 組</th><th>D2 組</th></tr></thead><tbody>' +
-    T.STUDENTS.map((s) =>
-      '<tr><td class="num">' + esc(s.id) + '</td>' +
-      '<td><input class="field" data-id="' + esc(s.id) + '" value="' + esc(s.name) + '" ' +
-        'style="padding:7px 9px;font-weight:700"></td>' +
-      '<td>' + esc(s.d1 || '') + '</td><td>' + esc(s.d2 || '') + '</td></tr>').join('') +
-    '</tbody></table></div>';
+    T.STUDENTS.map((s) => row(s.id, '<td>' + esc(s.d1 || '') + '</td><td>' + esc(s.d2 || '') + '</td>')).join('') +
+    '</tbody></table></div>' +
+
+    '<h2 class="sec">業師</h2>' +
+    '<div class="scroll"><table><thead><tr><th>編號</th><th>姓名</th></tr></thead><tbody>' +
+    T.MENTORS.map((m) => row(m.id, '')).join('') + '</tbody></table></div>';
 
   const inputs = () => [...p.querySelectorAll('input[data-id]')];
   const msg = (t) => { $('rs-msg').textContent = t; };
+
+  $('rs-fill').onclick = () => {
+    const lines = $('rs-bulk').value.split('\n').map((s) => s.trim()).filter(Boolean);
+    if (!lines.length) return msg('貼上的內容是空的。');
+    // 只填學員，業師那幾格自己打——順序對不上時比較不會出事。
+    const stu = inputs().filter((el) => T.person(el.dataset.id).role === 'student');
+    lines.slice(0, stu.length).forEach((nm, i) => { stu[i].value = nm; });
+    msg('填了 ' + Math.min(lines.length, stu.length) + ' 個名字' +
+      (lines.length > stu.length ? '（多出來的 ' + (lines.length - stu.length) + ' 行忽略）' : '') +
+      '。請對一下編號有沒有跑掉，再按儲存。');
+  };
 
   $('rs-reset').onclick = () => { renderRoster(); msg('已還原成目前生效的名單。'); };
   $('rs-save').onclick = async () => {
@@ -801,11 +834,12 @@ function renderRoster() {
       if (!v) { blank++; return; }
       map[el.dataset.id] = v;
     });
-    if (blank) return msg('有 ' + blank + ' 格是空的，姓名不能留空。');
+    if (blank) return msg('有 ' + blank + ' 格還沒填。姓名不能留空——沒填的人在各頁會只顯示編號。');
     msg('儲存中…');
     try {
       await A.saveNames(map);
       PEER_CACHE = null;
+      renderRoster();
       msg('已存到試算表，' + Object.keys(map).length + ' 筆。其他裝置下次開啟就會更新。');
     } catch (err) {
       msg('存檔失敗：' + (err.message || err));
@@ -1004,7 +1038,14 @@ $('btn-demo').onclick = () => {
 
 A.guard(document.body);
 A.mountBack($('back'), 'staff.html');
-A.syncNames();
+A.nameNotice(document.body);
+A.syncNames().then(() => {
+  A.nameNotice(document.body);
+  PEER_CACHE = null;
+  const active = [...document.querySelectorAll('nav.tabs button')]
+    .find((b) => b.getAttribute('aria-selected') === 'true');
+  if (active) active.click();
+});
 renderTabs('load');
 })();
 </script>

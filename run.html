@@ -160,7 +160,8 @@ async function refresh() {
 
 A.guard(document.querySelector('.app'));
 render();
-A.syncNames();
+A.nameNotice(document.querySelector('.app'));
+A.syncNames().then(() => { A.nameNotice(document.querySelector('.app')); render(); });
 
 if (!T.ENDPOINT || !A.readKey.get()) {
   $('stamp').innerHTML = '要顯示收件數字，請先到 <a href="dashboard.html">統計儀表板</a> 輸入一次讀取金鑰。';

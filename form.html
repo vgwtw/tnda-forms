@@ -542,7 +542,8 @@ function offerDownload(box, cols, rows) {
 A.guard(document.querySelector('.app'));
 A.mountBack($('back'),
   (F.role === 'mentor' ? 'run.html?day=' : 'today.html?day=') + encodeURIComponent(F.day || dayParam));
-A.syncNames().then((changed) => { if (changed) render(); });
+A.nameNotice(document.querySelector('.app'));
+A.syncNames().then(() => { A.nameNotice(document.querySelector('.app')); render(); });
 
 const me = A.draft.identity();
 if (me && me.role === F.role && me.id) {

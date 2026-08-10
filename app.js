@@ -90,6 +90,25 @@ const lock = {
    工作人員在儀表板改過的姓名。讀取不需要金鑰（名字本來就印在名牌上），
    寫入才需要。抓不到就用 config.js 的原名，頁面照常運作。 */
 const ROSTER_CACHE = 'tnda:roster';
+
+/** 姓名還沒載入時，在頁面最上方擋一塊——不然畫面全是編號，
+ *  學員會以為壞了，工作人員也不會發現名單還沒建。 */
+function nameNotice(hostEl) {
+  const el = hostEl && hostEl.querySelector('#__names');
+  const missing = T.missingNames();
+  if (!hostEl) return;
+  if (!missing.length) { if (el) el.remove(); return; }
+  const box = el || document.createElement('div');
+  box.id = '__names';
+  box.style.cssText = 'background:#000;color:#fff;padding:14px 18px;font:400 13px/1.7 ' +
+    '"Noto Sans TC","PingFang TC",sans-serif';
+  box.innerHTML = '<b style="color:#FF4F2C">名單還沒載入，畫面上顯示的是編號。</b><br>' +
+    (T.ENDPOINT
+      ? '還缺 ' + missing.length + ' 個人的姓名。工作人員請到<b>統計儀表板 →「名單」</b>輸入後儲存。'
+      : '<code>config.js</code> 的 ENDPOINT 還沒填，所以讀不到試算表上的姓名。');
+  if (!el) hostEl.insertBefore(box, hostEl.firstChild);
+}
+
 async function syncNames() {
   try {
     const cached = JSON.parse(localStorage.getItem(ROSTER_CACHE) || 'null');
@@ -334,6 +353,6 @@ async function saveNames(map) {
 
 return { esc, guard, entryHTML, readKey, fetchAll, progressItems, progressOf, PROGRESS_LABEL,
          draft, scopeList, optionList, cardLabel, columnsOf, submit, confirmSend,
-         mountBack, formsFor, lock, syncNames, saveNames,
+         mountBack, formsFor, lock, syncNames, saveNames, nameNotice,
          toCSV, parseCSV, download, mean, median, weighted100 };
 })();

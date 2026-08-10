@@ -134,7 +134,8 @@ $('print').onclick = () => window.print();
 
 A.guard(document.querySelector('.app'));
 A.mountBack($('back'), 'run.html?day=1');
-A.syncNames().then((changed) => { if (changed) render(); });
+A.nameNotice(document.querySelector('.app'));
+A.syncNames().then(() => { A.nameNotice(document.querySelector('.app')); render(); });
 render();
 })();
 </script>

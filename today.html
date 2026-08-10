@@ -149,7 +149,8 @@ function sentAlready(formId) {
 if (A && A.guard) A.guard(document.querySelector('.app'));
 render();
 // 工作人員改過的姓名，抓到就重畫（抓不到照樣用 config.js 的原名）
-A.syncNames().then((changed) => { if (changed) render(); });
+A.nameNotice(document.querySelector('.app'));
+A.syncNames().then(() => { A.nameNotice(document.querySelector('.app')); render(); });
 })();
 </script>
 </body>
