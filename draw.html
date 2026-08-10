@@ -133,7 +133,7 @@ $('redraw').onclick = () => {
 $('print').onclick = () => window.print();
 
 A.guard(document.querySelector('.app'));
-A.mountBack($('back'), 'run.html?day=1');
+A.mountBack($('back'), 'run.html?day=1', '當日流程');
 A.nameNotice(document.querySelector('.app'));
 A.syncNames().then(() => { A.nameNotice(document.querySelector('.app')); render(); });
 render();

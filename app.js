@@ -53,22 +53,15 @@ function entryHTML(role) {
   return html;
 }
 
-/* ── 回上一頁 ──────────────────────────────────────────────
-   每一頁都要有。有同源的來源就退回去，直接開網址（掃 QR 進來）
-   就回到那個角色當天的行程表，不會退到瀏覽器的空白頁。 */
-function backHref(fallback) {
-  return fallback || 'index.html';
-}
-function mountBack(el, fallback) {
+/* ── 返回 ──────────────────────────────────────────────────
+   每一頁都要有。**刻意不用 history.back()**——大家是掃 QR 進來的，
+   瀏覽器的上一頁可能是另一張表單、儀表板、或同一張表單的舊狀態，
+   按下去會跑到莫名其妙的地方。一律導到明確的目的地，
+   標籤也直接寫要去哪，不寫含糊的「上一頁」。 */
+function mountBack(el, href, label) {
   if (!el) return;
-  el.innerHTML = '<a href="' + esc(backHref(fallback)) + '" id="__back">← 上一頁</a>';
-  const a = el.querySelector('#__back');
-  a.onclick = (e) => {
-    // 有上一頁就退，沒有（例如剛掃 QR 進來）就走 fallback
-    if (document.referrer && document.referrer.indexOf(location.origin) === 0 && history.length > 1) {
-      e.preventDefault(); history.back();
-    }
-  };
+  el.innerHTML = '<a href="' + esc(href || 'index.html') + '" id="__back">← ' +
+    esc(label || '返回') + '</a>';
 }
 
 /** 這個時段、這個角色要填哪幾份表單。行程表兩邊共用同一份 forms 設定。 */

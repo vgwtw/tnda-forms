@@ -166,6 +166,14 @@ tbody tr:hover td{background:var(--s1)}
       margin:0 6px 4px 0;font-size:11.5px;white-space:nowrap;color:var(--fg)}
 .mate.taken{border-color:var(--line2);background:none;color:var(--fg3)}
 
+/* 誰寫的：業師姓名一律標出來，同儕維持匿名 */
+.quotes .src{display:block;font-size:11px;color:var(--fg3);margin-bottom:2px;letter-spacing:.02em}
+.whose{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;
+       border-top:1px solid var(--line2);padding-top:12px;color:var(--fg2)}
+.whose span{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);padding:4px 9px}
+.whose span b{font-weight:500;color:var(--fg)}
+.whose .gap{border:0;padding:0;color:var(--acc)}
+
 .row-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
 .msg{font-size:13px;padding:11px 14px;border:1px solid var(--line);background:var(--s1);margin-top:12px;line-height:1.6}
 .msg.err{background:var(--s1);border-color:var(--acc)}
@@ -323,11 +331,19 @@ function computeAll() {
     p.parts.mentor1 = A.mean(scores);
     p.raters.mentor1 = scores.length;
     p.spread = scores.length > 1 ? Math.max(...scores) - Math.min(...scores) : null;
+    // 證據與追問紀錄都帶上是哪位業師寫的——合議時要問得出「這句是誰看到的」。
     p.detail.mentor1 = FIELDS.mentor1.map((f) => ({
       f, v: A.mean(rows.map((r) => Number(r[f.k])).filter(Boolean)),
-      ev: rows.map((r) => r[f.k + '_ev']).filter(Boolean),
+      ev: rows.filter((r) => r[f.k + '_ev'])
+             .map((r) => ({ by: r.submitter, text: r[f.k + '_ev'] })),
     }));
-    p.notes = rows.map((r) => r.notes).filter(Boolean);
+    p.notes = rows.filter((r) => r.notes).map((r) => ({ by: r.submitter, text: r.notes }));
+    // 每位業師各自的總分與各面向給分，用來看差距是誰跟誰。
+    p.byMentor = rows.map((r) => ({
+      by: r.submitter,
+      score: rowScore('mentor1', r),
+      dims: FIELDS.mentor1.map((f) => Number(r[f.k]) || null),
+    })).sort((a, b) => (b.score || 0) - (a.score || 0));
     rows.forEach((r) => String(r.flags || '').split('|').filter(Boolean)
       .forEach((fl) => { if (!p.flags.includes(fl)) p.flags.push(fl); }));
   });
@@ -341,7 +357,10 @@ function computeAll() {
     p.detail.observe2 = FIELDS.observe2.map((f) => ({
       f, v: A.mean(rows.map((r) => Number(r[f.k])).filter(Boolean)), ev: [],
     }));
-    p.behaviour = rows.map((r) => r.behaviour).filter(Boolean);
+    // 具體事例也要記是誰觀察到的，還有是上午還是下午那一段。
+    p.behaviour = rows.filter((r) => r.behaviour).map((r) => ({
+      by: r.submitter, slot: r.slot || '', text: r.behaviour,
+    }));
   });
 
   // D2 團隊成果：subject = 組別，兩題平均後套用到組內每一位
@@ -847,9 +866,12 @@ function renderBrief() {
 
   let h = '<h2 class="sec">個人回饋摘要</h2>' +
     '<p class="lede">每位候選人一張，對應紙本「個人回饋摘要」那一頁。' +
-    '左側白線＝有需要業師主動處理的訊號。同儕亮點句已去識別，可以直接用。</p>' +
+    '左側白線＝有需要業師主動處理的訊號。<b>業師寫的每一句都標了是誰寫的</b>，' +
+    '合議時問得出「這句是誰看到的」；<b>同儕亮點句一律匿名</b>，那是對學員的承諾。</p>' +
     '<div class="row-actions"><button class="btn primary inline" id="brief-text">' +
-    '產生全部文字（可貼進回饋單）</button></div><div id="brief-out"></div>';
+    '產生全部文字（可貼進回饋單）</button>' +
+    '<label class="sw"><input type="checkbox" id="brief-anon"> 文字裡不要標業師姓名</label>' +
+    '<span class="stamp">要發給候選人時可以勾起來</span></div><div id="brief-out"></div>';
 
   h += '<div class="grid g2" style="margin-top:20px">';
   Object.values(people).sort(byId).forEach((x) => {
@@ -871,6 +893,12 @@ function renderBrief() {
       h += '<div class="bars" style="border-top:1px solid var(--line2);padding-top:12px">' +
         x.detail.mentor1.map((d) => barRow(d.f.label, (d.v || 0) / 5, n1(d.v) + ' / 5', 'mut')).join('') +
         '</div>';
+      // 兩位以上業師評到同一個人時，列出各自的總分——差距是誰跟誰，一眼看到。
+      if ((x.byMentor || []).length > 1) {
+        h += '<div class="whose">' + x.byMentor.map((m) =>
+          '<span><b>' + esc(T.nameOf(m.by)) + '</b>' + n1(m.score) + '</span>').join('') +
+          (x.spread != null ? '<span class="gap">差距 ' + n1(x.spread) + '</span>' : '') + '</div>';
+      }
     }
 
     const pills = x.flags.map((f) => '<span class="pill' + (f === 'STAR' ? '' : ' warn') + '">' +
@@ -880,13 +908,18 @@ function renderBrief() {
         (gp.gap > 0 ? '+' : '') + n1(gp.gap) + '</span>' : '');
     if (pills) h += '<div>' + pills + '</div>';
 
+    // 業師寫的都標名字；同儕的一律匿名（對學員的承諾）。
     const quotes = [].concat(
-      (x.detail.mentor1 || []).flatMap((d) => d.ev.map((e) => d.f.label + '：' + e)),
-      (peer ? peer.quotes : []).map((q) => '同儕：' + q),
-      (x.behaviour || []).map((b) => '過程：' + b));
+      (x.detail.mentor1 || []).flatMap((d) =>
+        d.ev.map((e) => ({ who: T.nameOf(e.by), what: d.f.label, text: e.text }))),
+      (x.notes || []).map((n) => ({ who: T.nameOf(n.by), what: '追問紀錄', text: n.text })),
+      (x.behaviour || []).map((b) => ({
+        who: T.nameOf(b.by), what: 'D2 過程' + (b.slot ? '·' + b.slot : ''), text: b.text })),
+      (peer ? peer.quotes : []).map((q) => ({ who: '', what: '同儕（匿名）', text: q })));
     if (quotes.length) {
-      h += '<div class="quotes">' + quotes.slice(0, 8).map((q) =>
-        '<div>' + esc(q) + '</div>').join('') + '</div>';
+      h += '<div class="quotes">' + quotes.slice(0, 10).map((q) =>
+        '<div><span class="src">' + (q.who ? esc(q.who) + '　' : '') + esc(q.what) + '</span>' +
+        esc(q.text) + '</div>').join('') + '</div>';
     }
     h += '</div>';
   });
@@ -894,6 +927,9 @@ function renderBrief() {
   p.innerHTML = h;
 
   $('brief-text').onclick = () => {
+    // 勾了就不標業師姓名——要發給候選人時用。
+    const anon = $('brief-anon').checked;
+    const by = (id) => anon ? '' : '（' + T.nameOf(id) + '）';
     let t = '';
     Object.values(people).sort(byId).forEach((x) => {
       if (x.total == null) return;
@@ -901,19 +937,30 @@ function renderBrief() {
       t += '════ ' + x.id + '　' + x.name + '　' + x.d1 + (x.team ? ' / ' + x.team : '') + ' ════\n' +
         '加權總分 ' + n1(x.total) + '（已計入 ' + Math.round(x.coverage * 100) + '%）\n' +
         T.SCORING.map((s) => '  ' + s.label + ' ' + n1(x.parts[s.form])).join('\n') + '\n';
+      if (!anon && (x.byMentor || []).length > 1) {
+        t += '\n【各業師給分】\n' +
+          x.byMentor.map((m) => '  ' + T.nameOf(m.by) + ' ' + n1(m.score)).join('\n') +
+          (x.spread != null ? '\n  差距 ' + n1(x.spread) : '') + '\n';
+      }
       if (x.detail.mentor1) {
         t += '\n【D1 各面向 1–5】\n' +
           x.detail.mentor1.map((d) => '  ' + d.f.label + ' ' + n1(d.v) +
-            (d.ev.length ? '　證據：' + d.ev.join('；') : '')).join('\n') + '\n';
+            (d.ev.length
+              ? '\n' + d.ev.map((e) => '      證據' + by(e.by) + '：' + e.text).join('\n')
+              : '')).join('\n') + '\n';
+      }
+      if ((x.notes || []).length) {
+        t += '\n【追問紀錄】\n' + x.notes.map((n) => '  · ' + by(n.by) + n.text).join('\n') + '\n';
       }
       if (peer && peer.received) {
         const top = Object.entries(peer.reasons).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([c]) => c);
-        t += '\n【同儕訊號（不計分）】\n  ' + peer.yes + '/' + peer.received +
+        t += '\n【同儕訊號（不計分，匿名）】\n  ' + peer.yes + '/' + peer.received +
           ' 位同組同學表示想一起工作，最常指認：' + top.join('、') + '\n' +
           (peer.quotes.length ? peer.quotes.map((q) => '  · ' + q).join('\n') + '\n' : '');
       }
       if (x.behaviour && x.behaviour.length) {
-        t += '\n【D2 過程觀察到的具體行為】\n' + x.behaviour.map((b) => '  · ' + b).join('\n') + '\n';
+        t += '\n【D2 過程觀察到的具體行為】\n' +
+          x.behaviour.map((b) => '  · ' + (b.slot ? b.slot + '　' : '') + by(b.by) + b.text).join('\n') + '\n';
       }
       if (x.team && teamScore[x.team]) {
         t += '\n【D2 團隊】' + x.team + '　' + n1(teamScore[x.team].score) + '\n' +
@@ -1260,7 +1307,7 @@ $('btn-demo').onclick = () => {
 })();
 
 A.guard(document.body);
-A.mountBack($('back'), 'staff.html');
+A.mountBack($('back'), 'staff.html', '業師入口');
 A.nameNotice(document.body);
 A.syncNames().then(() => {
   A.nameNotice(document.body);

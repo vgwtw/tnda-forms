@@ -544,7 +544,8 @@ function offerDownload(box, cols, rows) {
 /* ════ 啟動 ═══════════════════════════════════════════════ */
 A.guard(document.querySelector('.app'));
 A.mountBack($('back'),
-  (F.role === 'mentor' ? 'run.html?day=' : 'today.html?day=') + encodeURIComponent(F.day || dayParam));
+  (F.role === 'mentor' ? 'run.html?day=' : 'today.html?day=') + encodeURIComponent(F.day || dayParam),
+  F.role === 'mentor' ? '當日流程' : '當日行程');
 A.nameNotice(document.querySelector('.app'));
 A.syncNames().then(() => { A.nameNotice(document.querySelector('.app')); render(); });
 

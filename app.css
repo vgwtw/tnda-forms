@@ -31,6 +31,12 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:.88em;background:var(--i
 .bar h1{margin:2px 0 0;font:700 20px/1.2 var(--font-body)}
 .bar .who{font:400 12px/1.4 var(--font-body);text-align:right;white-space:nowrap}
 .bar.dark{background:var(--tnda-black)}
+/* 抬頭列上的連結（← 上一頁）。app.css 的預設 a 是橘色，
+   放在橘底的學員抬頭上會整個看不見，所以這裡一定要覆蓋。
+   順便把點擊區墊大，手機上才好按。 */
+.bar a{color:var(--tnda-white);border-bottom:1px solid var(--white-a40);
+       display:inline-block;padding:8px 2px;font-weight:500}
+.bar a:hover{border-bottom-color:var(--tnda-white)}
 .body{flex:1;padding:20px 18px 150px}
 
 /* ── blocks ────────────────────────────────────────────── */

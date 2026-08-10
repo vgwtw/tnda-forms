@@ -98,7 +98,7 @@ const today = days.find((d) => T.SCHEDULE[d].date === todayISO());
 const DAY = days.includes(asked) ? asked : (today || days[0]);
 const S = T.SCHEDULE[DAY] || { blocks: [] };
 
-A.mountBack(document.getElementById('back'), 'index.html');
+A.mountBack(document.getElementById('back'), 'index.html', '選一天');
 document.getElementById('eyebrow').textContent = 'TNDA 前導甄選　學員　DAY ' + DAY;
 document.getElementById('h1').textContent = S.title || '當日行程';
 
