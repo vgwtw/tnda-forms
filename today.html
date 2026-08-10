@@ -10,12 +10,11 @@
 .app{max-width:680px;background:#fff}
 .body{background:#fff}
 
-.dayhead{border:2px solid var(--tnda-black);padding:14px 16px}
-.dayhead .k{font:700 10px/1.2 var(--font-display);letter-spacing:.14em;color:var(--tnda-orange)}
-.dayhead .t{font:700 21px/1.25 var(--font-body);margin-top:4px}
-.dayhead .d{font-size:12.5px;color:var(--ink-500);margin-top:4px}
-.dayhead .today{display:inline-block;font:700 10px/1 var(--font-display);letter-spacing:.1em;
-                background:var(--tnda-orange);color:#fff;padding:5px 8px;margin-left:8px;vertical-align:2px}
+/* 日期列。DAY 與標題已經在橘色抬頭上了，這裡只補抬頭沒有的資訊。 */
+.dayline{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--ink-500);
+         padding-bottom:12px;border-bottom:2px solid var(--tnda-black)}
+.dayline .today{font:700 10px/1 var(--font-display);letter-spacing:.1em;
+                background:var(--tnda-orange);color:#fff;padding:5px 8px}
 
 .other{display:block;border:2px solid var(--ink-200);padding:11px 14px;margin-top:10px;
        font-size:13px;color:var(--ink-500);background:#fff}
@@ -103,10 +102,9 @@ document.getElementById('eyebrow').textContent = 'TNDA 前導甄選　學員　D
 document.getElementById('h1').textContent = S.title || '當日行程';
 
 function render() {
-  let h = '<div class="dayhead"><div class="k">DAY ' + esc(DAY) + '</div>' +
-    '<div class="t">' + esc(S.title || '') +
-      (DAY === today ? '<span class="today">今天</span>' : '') + '</div>' +
-    '<div class="d">' + esc(S.date || '') + '</div></div>';
+  // DAY 與標題在抬頭上已經有了，這裡只放日期與「今天」，不重複。
+  let h = '<div class="dayline"><span>' + esc(S.date || '') + '</span>' +
+    (DAY === today ? '<span class="today">今天</span>' : '') + '</div>';
 
   const otherDay = days.find((d) => d !== DAY);
   if (otherDay) {
@@ -148,9 +146,8 @@ function sentAlready(formId) {
 
 if (A && A.guard) A.guard(document.querySelector('.app'));
 render();
-// 工作人員改過的姓名，抓到就重畫（抓不到照樣用 config.js 的原名）
-A.nameNotice(document.querySelector('.app'));
-A.syncNames().then(() => { A.nameNotice(document.querySelector('.app')); render(); });
+// 名單沒載入的提示只給工作人員看——學員看到也幫不上忙，只會以為壞了。
+A.syncNames().then(() => render());
 })();
 </script>
 </body>

@@ -40,8 +40,7 @@ document.getElementById('list').innerHTML = Object.keys(T.SCHEDULE).map((d) => {
     '<div class="sub">' + (forms ? '要填：' + A.esc(forms) : '沒有要填的表單') + '</div></a>';
 }).join('');
 A.guard(document.querySelector('.app'));
-A.nameNotice(document.querySelector('.app'));
-A.syncNames().then(() => A.nameNotice(document.querySelector('.app')));
+A.syncNames();   // 學員端不顯示「名單未載入」提示
 })();
 </script>
 </body>
