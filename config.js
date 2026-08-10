@@ -15,7 +15,7 @@ window.TNDA = (() => {
    Google Apps Script 網頁應用程式網址（部署後貼上，形如
    https://script.google.com/macros/s/AKfy..../exec）
    留空字串＝離線模式：只存在瀏覽器，用「匯出檔案」交回。 */
-const ENDPOINT = '';
+const ENDPOINT = 'https://script.google.com/macros/s/AKfycbz8DHl5GENOFtvxOa8EGhUIIkYAb2mdH4Dxf4AWLnNtmyndlcQGXWa3ArEWtEUk_hDN/exec';
 
 
 /* ② ─── 人 ────────────────────────────────────────────────────
