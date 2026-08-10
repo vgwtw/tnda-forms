@@ -105,7 +105,8 @@ function nameNotice(hostEl) {
   box.innerHTML = '<b style="color:#FF4F2C">名單還沒載入，畫面上顯示的是編號。</b><br>' +
     (T.ENDPOINT
       ? '還缺 ' + missing.length + ' 個人的姓名。工作人員請到<b>統計儀表板 →「名單」</b>輸入後儲存。'
-      : '<code>config.js</code> 的 ENDPOINT 還沒填，所以讀不到試算表上的姓名。');
+      // 黑底裡不要用 <code>——app.css 給它淺底，字會看不見
+      : 'config.js 的 ENDPOINT 還沒填，所以讀不到試算表上的姓名。');
   if (!el) hostEl.insertBefore(box, hostEl.firstChild);
 }
 
