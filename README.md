@@ -165,19 +165,31 @@ Day1 分組（`d1`）和 Day2 分組（`d2`）都是這一列的欄位，組別�
 
 ### 3 — 上架
 
-把整個資料夾丟上任一靜態空間：
+已經上架在 **GitHub Pages**：<https://vgwtw.github.io/tnda-forms/>
+（repo：<https://github.com/vgwtw/tnda-forms>）
 
-- **Netlify Drop** — <https://app.netlify.com/drop>，拖進去 30 秒拿到網址（最快）
-- 或 GitHub Pages / Google Sites / 公司既有空間
+改完東西要更新線上版：
 
-拿到 `https://xxx.netlify.app/` 後，做**四個 QR Code**——角色 × 天數各一個：
+```bash
+git add -A && git commit -m "改了什麼" && git push
+```
+
+推上去約 1 分鐘後生效。**手機看到舊版就強制重新整理一次**（瀏覽器會快取 `config.js`）。
+
+做**四個 QR Code**——角色 × 天數各一個：
 
 | | 網址 | 印在哪／怎麼發 |
 |---|---|---|
-| 學員 Day 1 | `…/today.html?day=1` | Day1 的學員名牌與現場桌牌 |
-| 學員 Day 2 | `…/today.html?day=2` | Day2 的桌牌（Day1 的名牌不要印這個，避免掃錯） |
-| 業師 Day 1 | `…/run.html?day=1` | 業師的校準速查卡，或直接傳給四位業師 |
-| 業師 Day 2 | `…/run.html?day=2` | 同上 |
+| 學員 Day 1 | `https://vgwtw.github.io/tnda-forms/today.html?day=1` | Day1 的學員名牌與現場桌牌 |
+| 學員 Day 2 | `https://vgwtw.github.io/tnda-forms/today.html?day=2` | Day2 的桌牌（Day1 的名牌不要印這個，避免掃錯） |
+| 業師 Day 1 | `https://vgwtw.github.io/tnda-forms/run.html?day=1` | 業師的校準速查卡，或直接傳給四位業師 |
+| 業師 Day 2 | `https://vgwtw.github.io/tnda-forms/run.html?day=2` | 同上 |
+
+> **這個 repo 是公開的。** 現在 `config.js` 是「學員01…」假名單，公開沒問題；
+> 但**填進真實姓名前要先決定怎麼處理**——真名進公開 repo 等於把個資放上網。
+> 三個選項：① 改成私有 repo（Pages 需要 GitHub Pro）
+> ② 改用 Netlify Drop 上架（不公開原始碼）
+> ③ `config.js` 只留編號、姓名全部從試算表的 `roster` 分頁載入（系統已經支援）。
 
 掃進去就是當天的行程，要填的表單直接從那一段點進去，**不用先找入口再找表單**。
 掃錯天也沒關係，行程頁上有「看 DAY 2 的流程 →」可以切。
