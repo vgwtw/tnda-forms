@@ -371,7 +371,7 @@ const FORMS = {
 
 const SCHEDULE = {
   1: {
-    date: '2026-08-15',
+    date: '2026-08-14',
     title: '個人作品集答辯',
     blocks: [
       { from: '10:00', to: '10:25', label: '開場',
@@ -428,7 +428,7 @@ const SCHEDULE = {
     ],
   },
   2: {
-    date: '2026-08-16',
+    date: '2026-08-15',
     title: '三人一組現場解題',
     blocks: [
       { from: '10:00', to: '10:15', label: '暖身、分組、規則公開',
