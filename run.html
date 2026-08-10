@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="robots" content="noindex,nofollow">
+<title>當日流程 · TNDA 前導甄選</title>
+<link rel="stylesheet" href="app.css">
+<style>
+.app{max-width:760px;background:#fff}
+.body{background:#fff}
+
+.dayhead{border:2px solid var(--tnda-black);padding:14px 16px}
+.dayhead .k{font:700 10px/1.2 var(--font-display);letter-spacing:.14em;color:var(--tnda-orange)}
+.dayhead .t{font:700 21px/1.25 var(--font-body);margin-top:4px}
+.dayhead .d{font-size:12.5px;color:var(--ink-500);margin-top:4px}
+.dayhead .today{display:inline-block;font:700 10px/1 var(--font-display);letter-spacing:.1em;
+                background:var(--tnda-orange);color:#fff;padding:5px 8px;margin-left:8px;vertical-align:2px}
+
+.other{display:block;border:2px solid var(--ink-200);padding:11px 14px;margin-top:10px;
+       font-size:13px;color:var(--ink-500);background:#fff}
+.other:hover{border-color:var(--tnda-black);color:var(--tnda-black)}
+
+.blk{display:grid;grid-template-columns:64px 1fr;gap:14px;padding:14px 0;
+     border-bottom:1px solid var(--ink-100)}
+.blk .time{font:700 13px/1.35 var(--font-display);white-space:nowrap}
+.blk .time em{display:block;font:400 11px/1.3 var(--font-body);color:var(--ink-300);font-style:normal}
+.blk .lb{font:700 16px/1.3 var(--font-body)}
+.blk .nt{font-size:12.5px;color:var(--ink-500);line-height:1.55;margin-top:3px}
+.blk ul{margin:9px 0 0;padding-left:17px;font-size:13px;line-height:1.65}
+.blk ul li{margin-bottom:3px}
+.blk ul strong{color:var(--tnda-orange)}
+.blk.key{background:var(--orange-100);margin:0 -12px;padding:14px 12px}
+
+.watch{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.wchip{border:2px solid var(--tnda-black);padding:7px 10px;font-size:12.5px;font-weight:700;
+       display:inline-flex;gap:8px;align-items:center;color:var(--tnda-black);background:#fff}
+.wchip:hover{background:var(--tnda-black);color:#fff}
+.wchip b{font:900 12px/1 var(--font-display);color:var(--ink-500)}
+.wchip:hover b{color:var(--white-a70)}
+.wchip.full b{color:#fff}
+.wchip.full{border-color:var(--tnda-orange);background:var(--tnda-orange);color:#fff}
+.wchip.full:hover{background:var(--orange-600);border-color:var(--orange-600)}
+.wchip.stu{border-style:dashed}
+
+.stamp{font-size:12px;color:var(--ink-300);margin-bottom:16px;line-height:1.6}
+.foot-note{margin-top:26px;border-top:2px solid var(--tnda-black);padding-top:14px;
+           font-size:12.5px;color:var(--ink-500);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="bar dark">
+    <div><div class="eyebrow" id="eyebrow" style="color:var(--tnda-orange)">TNDA 前導甄選　業師</div>
+      <h1 id="h1">當日流程</h1></div>
+    <div class="who" id="back"></div>
+  </header>
+
+  <main class="body" style="padding-bottom:40px">
+    <div class="stamp" id="stamp"></div>
+    <div id="out"></div>
+    <div class="foot-note">
+      時程會依現場進度滾動調整；真的改了就改 <code>config.js</code> 的 <code>SCHEDULE</code>。<br>
+      實線框是你要填的表單，虛線框是學員填的（點進去可代填）。後面的數字是收了幾份，每 2 分鐘自己更新。<br>
+      表單<strong>送出後不能修改</strong>，要讓某個人重填，到試算表把他那幾列刪掉。
+    </div>
+  </main>
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+(() => {
+'use strict';
+const T = window.TNDA, A = window.APP;
+const $ = (id) => document.getElementById(id), esc = A.esc;
+
+/* 掃 QR 進來的第一頁（業師版）：當天的流程 ＋ 每一段要做的事 ＋ 要收的表單。
+   唯讀，不標「現在」——行程會 delay，標了多半是錯的。 */
+
+let DATA = null;
+const two = (n) => String(n).padStart(2, '0');
+const todayISO = () => {
+  const d = new Date();
+  return d.getFullYear() + '-' + two(d.getMonth() + 1) + '-' + two(d.getDate());
+};
+const clockText = () => { const d = new Date(); return two(d.getHours()) + ':' + two(d.getMinutes()); };
+const mins = (hhmm) => {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm || '');
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+};
+
+const days = Object.keys(T.SCHEDULE);
+const asked = new URLSearchParams(location.search).get('day');
+const today = days.find((d) => T.SCHEDULE[d].date === todayISO());
+const DAY = days.includes(asked) ? asked : (today || days[0]);
+const S = T.SCHEDULE[DAY] || { blocks: [] };
+
+A.mountBack($('back'), 'staff.html');
+$('eyebrow').textContent = 'TNDA 前導甄選　業師與主辦　DAY ' + DAY;
+$('h1').textContent = S.title || '當日流程';
+
+function render() {
+  let h = '<div class="dayhead"><div class="k">DAY ' + esc(DAY) + '</div>' +
+    '<div class="t">' + esc(S.title || '') +
+      (DAY === today ? '<span class="today">今天</span>' : '') + '</div>' +
+    '<div class="d">' + esc(S.date || '') + '</div></div>';
+
+  const otherDay = days.find((d) => d !== DAY);
+  if (otherDay) {
+    h += '<a class="other" href="run.html?day=' + esc(otherDay) + '">' +
+      '看 DAY ' + esc(otherDay) + '　' + esc(T.SCHEDULE[otherDay].title || '') + ' 的流程 →</a>';
+  }
+
+  h += (S.blocks || []).map(blockHTML).join('');
+  $('out').innerHTML = h;
+}
+
+function blockHTML(b) {
+  const span = mins(b.to) - mins(b.from);
+  let h = '<div class="blk' + (b.key ? ' key' : '') + '">' +
+    '<div class="time">' + esc(b.from) +
+      '<em>' + esc(b.to) + (span ? '　' + span + "'" : '') + '</em></div><div>' +
+    '<div class="lb">' + esc(b.label) + '</div>' +
+    (b.note ? '<div class="nt">' + esc(b.note) + '</div>' : '');
+  if (b.todo && b.todo.length) h += '<ul>' + b.todo.map((t) => '<li>' + t + '</li>').join('') + '</ul>';
+
+  // 工具頁（例如擂台賽抽籤）與表單排在一起
+  const chips = (b.links || []).map((l) =>
+    '<a class="wchip" href="' + esc(l.href) + '">' + esc(l.label) + '</a>');
+  A.formsFor(b).forEach((id) => chips.push(formChip(id)));
+  if (chips.length) h += '<div class="watch">' + chips.join('') + '</div>';
+
+  return h + '</div></div>';
+}
+
+/** 一份表單的按鈕：點了直接開，後面是收了幾份。虛線＝學員填的。 */
+function formChip(id) {
+  const stu = T.FORMS[id].role === 'student' ? ' stu' : '';
+  const href = 'form.html?f=' + encodeURIComponent(id) + '&day=' + encodeURIComponent(DAY);
+  const label = esc(A.PROGRESS_LABEL[id] || id);
+  if (!DATA) return '<a class="wchip' + stu + '" href="' + href + '">' + label + '</a>';
+  const p = A.progressOf(id, DATA[id]);
+  const full = p.total > 0 && p.done >= p.total;
+  return '<a class="wchip' + stu + (full ? ' full' : '') + '" href="' + href + '">' + label +
+    '<b>' + p.done + ' / ' + p.total + '</b></a>';
+}
+
+async function refresh() {
+  try {
+    DATA = await A.fetchAll();
+    $('stamp').textContent = '收件狀況更新於 ' + clockText();
+  } catch (err) {
+    DATA = null;
+    $('stamp').textContent = '收件狀況取不到：' + String(err.message || err);
+  }
+  render();
+}
+
+A.guard(document.querySelector('.app'));
+render();
+A.syncNames();
+
+if (!T.ENDPOINT || !A.readKey.get()) {
+  $('stamp').innerHTML = '要顯示收件數字，請先到 <a href="dashboard.html">統計儀表板</a> 輸入一次讀取金鑰。';
+} else {
+  refresh();
+  setInterval(refresh, 120000);
+}
+})();
+</script>
+</body>
+</html>

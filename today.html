@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FF4F2C">
+<title>當日行程 · TNDA 前導甄選</title>
+<link rel="stylesheet" href="app.css">
+<style>
+.app{max-width:680px;background:#fff}
+.body{background:#fff}
+
+.dayhead{border:2px solid var(--tnda-black);padding:14px 16px}
+.dayhead .k{font:700 10px/1.2 var(--font-display);letter-spacing:.14em;color:var(--tnda-orange)}
+.dayhead .t{font:700 21px/1.25 var(--font-body);margin-top:4px}
+.dayhead .d{font-size:12.5px;color:var(--ink-500);margin-top:4px}
+.dayhead .today{display:inline-block;font:700 10px/1 var(--font-display);letter-spacing:.1em;
+                background:var(--tnda-orange);color:#fff;padding:5px 8px;margin-left:8px;vertical-align:2px}
+
+.other{display:block;border:2px solid var(--ink-200);padding:11px 14px;margin-top:10px;
+       font-size:13px;color:var(--ink-500);background:#fff}
+.other:hover{border-color:var(--tnda-black);color:var(--tnda-black)}
+
+.blk{display:grid;grid-template-columns:60px 1fr;gap:14px;padding:15px 0;
+     border-bottom:1px solid var(--ink-100)}
+.blk .time{font:700 13px/1.35 var(--font-display);white-space:nowrap}
+.blk .time em{display:block;font:400 11px/1.3 var(--font-body);color:var(--ink-300);font-style:normal}
+.blk .lb{font:700 16px/1.3 var(--font-body)}
+.blk .nt{font-size:12.5px;color:var(--ink-500);line-height:1.55;margin-top:3px}
+.blk .you{margin-top:9px;padding-left:11px;border-left:3px solid var(--tnda-orange);
+          font-size:13px;line-height:1.6}
+.blk .you strong{color:var(--tnda-orange)}
+.blk.key{background:var(--orange-100);margin:0 -12px;padding:15px 12px}
+
+/* 要填的表單：直接點進去 */
+.fbtn{display:inline-flex;align-items:center;gap:9px;border:2px solid var(--tnda-black);
+      padding:10px 13px;margin:10px 8px 0 0;font:700 14px/1.2 var(--font-body);
+      color:var(--tnda-black);background:#fff}
+.fbtn:hover{background:var(--tnda-black);color:#fff}
+.fbtn .go{font:900 11px/1 var(--font-display);color:var(--tnda-orange)}
+.fbtn.sent{border-color:var(--ink-200);background:var(--ink-050);color:var(--ink-300)}
+.fbtn.sent .go{color:var(--ink-300)}
+
+.foot-note{margin-top:26px;border-top:2px solid var(--tnda-black);padding-top:14px;
+           font-size:12.5px;color:var(--ink-500);line-height:1.7}
+.err{border:2px solid var(--tnda-orange);background:var(--orange-100);padding:14px;
+     font-size:13px;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="bar">
+    <div><div class="eyebrow" id="eyebrow">TNDA 前導甄選　學員</div><h1 id="h1">當日行程</h1></div>
+    <div class="who" id="back"></div>
+  </header>
+
+  <main class="body" style="padding-bottom:40px">
+    <div id="out"></div>
+    <div class="foot-note">
+      <strong>時間僅供參考，現場會依實際進度調整，一律以現場宣布為準。</strong><br>
+      表單<strong>送出後就不能修改</strong>，送出前請先確認填好了。
+    </div>
+  </main>
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+(() => {
+'use strict';
+
+/* 掃 QR 進來的第一頁：當天的流程 ＋ 每一段要填的表單。
+   唯讀的行程（不標「現在」），只有表單連結可以點。 */
+
+const out = document.getElementById('out');
+if (!window.TNDA || !window.TNDA.SCHEDULE) {
+  out.innerHTML = '<div class="err">流程還沒載入完成。請重新整理一次；' +
+    '如果還是這樣，請告訴現場工作人員。</div>';
+  return;
+}
+
+const T = window.TNDA, A = window.APP;
+const esc = A.esc;
+const two = (n) => String(n).padStart(2, '0');
+const todayISO = () => {
+  const d = new Date();
+  return d.getFullYear() + '-' + two(d.getMonth() + 1) + '-' + two(d.getDate());
+};
+const mins = (hhmm) => {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm || '');
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+};
+
+const days = Object.keys(T.SCHEDULE);
+const asked = new URLSearchParams(location.search).get('day');
+const today = days.find((d) => T.SCHEDULE[d].date === todayISO());
+// QR 指定哪一天就看哪一天；沒指定就看今天，都對不上就 Day 1。
+const DAY = days.includes(asked) ? asked : (today || days[0]);
+const S = T.SCHEDULE[DAY] || { blocks: [] };
+
+A.mountBack(document.getElementById('back'), 'index.html');
+document.getElementById('eyebrow').textContent = 'TNDA 前導甄選　學員　DAY ' + DAY;
+document.getElementById('h1').textContent = S.title || '當日行程';
+
+function render() {
+  let h = '<div class="dayhead"><div class="k">DAY ' + esc(DAY) + '</div>' +
+    '<div class="t">' + esc(S.title || '') +
+      (DAY === today ? '<span class="today">今天</span>' : '') + '</div>' +
+    '<div class="d">' + esc(S.date || '') + '</div></div>';
+
+  const otherDay = days.find((d) => d !== DAY);
+  if (otherDay) {
+    h += '<a class="other" href="today.html?day=' + esc(otherDay) + '">' +
+      '看 DAY ' + esc(otherDay) + '　' + esc(T.SCHEDULE[otherDay].title || '') + ' 的流程 →</a>';
+  }
+
+  h += (S.blocks || []).map(blockHTML).join('');
+  out.innerHTML = h;
+}
+
+function blockHTML(b) {
+  const span = mins(b.to) - mins(b.from);
+  // 只顯示學員要填的表單；業師端的 todo／links 不會出現在這一頁。
+  const forms = A.formsFor(b, 'student').map((id) => {
+    const f = T.FORMS[id];
+    const sent = sentAlready(id);
+    return '<a class="fbtn' + (sent ? ' sent' : '') + '" href="form.html?f=' +
+      encodeURIComponent(id) + '&day=' + esc(DAY) + '">' + esc(f.title) +
+      '<span class="go">' + (sent ? '已送出' : '去填 →') + '</span></a>';
+  }).join('');
+
+  return '<div class="blk' + (b.key ? ' key' : '') + '">' +
+    '<div class="time">' + esc(b.from) +
+      '<em>' + esc(b.to) + (span ? '　' + span + "'" : '') + '</em></div>' +
+    '<div><div class="lb">' + esc(b.label) + '</div>' +
+      (b.note ? '<div class="nt">' + esc(b.note) + '</div>' : '') +
+      (b.you ? '<div class="you">' + b.you + '</div>' : '') +
+      forms +
+    '</div></div>';
+}
+
+/** 這台裝置送出過沒。只看得到自己這台的紀錄，夠用來提醒「已經交了」。 */
+function sentAlready(formId) {
+  const me = A.draft.identity();
+  if (!me || !me.id) return false;
+  return A.lock.is(formId + '§' + me.id);
+}
+
+if (A && A.guard) A.guard(document.querySelector('.app'));
+render();
+// 工作人員改過的姓名，抓到就重畫（抓不到照樣用 config.js 的原名）
+A.syncNames().then((changed) => { if (changed) render(); });
+})();
+</script>
+</body>
+</html>

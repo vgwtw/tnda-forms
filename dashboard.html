@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>統計儀表板 · TNDA 前導甄選</title>
+<link rel="stylesheet" href="app.css">
+<style>
+body{background:var(--ink-050)}
+.wrap{max-width:1240px;margin:0 auto;padding:0 24px 90px}
+header.top{background:var(--tnda-orange);color:var(--tnda-white);padding:26px 0}
+header.top .wrap{padding-bottom:0;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+header.top h1{margin:4px 0 0;font:700 28px/1.2 var(--font-body)}
+header.top .meta{font-size:13px;text-align:right;line-height:1.5}
+
+nav.tabs{background:var(--tnda-black);position:sticky;top:0;z-index:10}
+nav.tabs .wrap{padding:0;display:flex;overflow-x:auto}
+nav.tabs button{color:#fff;opacity:.55;padding:14px 18px;white-space:nowrap;
+  font:700 13px/1 var(--font-body);border-bottom:3px solid transparent}
+nav.tabs button[aria-selected="true"]{opacity:1;color:var(--tnda-orange);border-bottom-color:var(--tnda-orange)}
+
+section.pane{padding-top:30px}
+h2.sec{font:700 10px/1.2 var(--font-display);letter-spacing:.14em;color:var(--tnda-orange);
+  text-transform:uppercase;margin:34px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--tnda-black)}
+h2.sec:first-child{margin-top:0}
+p.lede{font-size:14px;color:var(--ink-500);margin:0 0 16px;max-width:74ch;line-height:1.7}
+p.lede b{color:var(--tnda-black)}
+
+.card{background:var(--tnda-white);border:2px solid var(--tnda-black);padding:18px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(175px,1fr))}
+
+.stat{background:var(--tnda-white);border:2px solid var(--tnda-black);padding:16px}
+.stat .k{font:700 10px/1.2 var(--font-display);letter-spacing:.12em;color:var(--ink-500);text-transform:uppercase}
+.stat .v{font:900 32px/1.05 var(--font-display);margin-top:8px}
+.stat .u{font-size:12px;color:var(--ink-500);margin-top:4px}
+.stat.on{background:var(--tnda-black);color:var(--tnda-white)}
+.stat.on .k,.stat.on .u{color:var(--white-a70)}
+
+.bars{display:grid;gap:7px}
+.bar{display:grid;grid-template-columns:130px 1fr 96px;gap:10px;align-items:center;font-size:13px}
+.bar .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .t b{font-family:var(--font-display);font-weight:900;margin-right:6px;color:var(--tnda-orange)}
+.bar .track{display:block;height:16px;background:var(--ink-100);position:relative}
+.bar .fill{display:block;height:100%;min-width:2px;background:var(--tnda-black)}
+.bar .fill.acc{background:var(--tnda-orange)}
+.bar .fill.mut{background:var(--ink-300)}
+.bar .mark{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--tnda-black)}
+.bar .n{font:700 12px/1.3 var(--font-display);text-align:right;white-space:nowrap}
+.legend{font-size:12px;color:var(--ink-500);margin-top:12px;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.legend i{display:inline-block;width:22px;height:10px;background:var(--tnda-orange);margin-right:6px;vertical-align:-1px}
+.legend i.line{width:2px;height:14px;background:var(--tnda-black)}
+
+table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--tnda-white)}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--ink-100);vertical-align:top}
+th{font:700 10px/1.2 var(--font-display);letter-spacing:.1em;text-transform:uppercase;
+  border-bottom:2px solid var(--tnda-black);white-space:nowrap}
+td.num,th.num{text-align:right;font-family:var(--font-display);font-weight:700;white-space:nowrap}
+td.big{font:900 17px/1 var(--font-display);text-align:right}
+tr.flagged td{background:var(--orange-100)}
+.scroll{overflow-x:auto;background:var(--tnda-white);border:2px solid var(--tnda-black)}
+.scroll table{border:0}
+
+.person{background:var(--tnda-white);border:2px solid var(--tnda-black);padding:18px;display:flex;flex-direction:column;gap:12px}
+.person.flag{border-color:var(--tnda-orange);border-width:4px}
+.person h3{margin:0;font:700 19px/1.25 var(--font-body)}
+.person .sub{font-size:11.5px;color:var(--ink-500)}
+.rate{display:flex;align-items:baseline;gap:8px}
+.rate .big{font:900 30px/1 var(--font-display)}
+.rate .cmp{font-size:12px;color:var(--ink-500)}
+.quotes{border-top:1px solid var(--ink-100);padding-top:10px;display:grid;gap:6px}
+.quotes div{font-size:13px;line-height:1.5;padding-left:12px;border-left:3px solid var(--tnda-orange)}
+.pill{display:inline-block;font:700 10px/1 var(--font-display);letter-spacing:.06em;
+  padding:5px 8px;border:2px solid var(--tnda-black);margin:0 5px 5px 0}
+.pill.warn{background:var(--tnda-orange);border-color:var(--tnda-orange);color:var(--tnda-white)}
+/* 互選對象：收在同一格裡的小標，一人一列才不會排出上百格 */
+.mate{display:inline-block;border:1px solid var(--tnda-black);padding:2px 7px;
+      margin:0 5px 4px 0;font-size:12px;white-space:nowrap}
+.mate.taken{border-color:var(--ink-200);background:var(--ink-050);color:var(--ink-300)}
+
+.row-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.msg{font-size:13px;padding:11px 14px;border:2px solid var(--tnda-black);margin-top:12px;line-height:1.6}
+.msg.err{background:var(--orange-100);border-color:var(--tnda-orange)}
+.warnbox{background:var(--tnda-black);color:var(--tnda-white);padding:16px;font-size:13px;line-height:1.7}
+.warnbox b{color:var(--tnda-orange)}
+/* 黑底裡的 code 要跟著反白，不然 app.css 的淺底會把字吃掉 */
+.warnbox code{background:var(--white-a16);color:#fff}
+label.sw{display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
+.empty{padding:60px 20px;text-align:center;color:var(--ink-300);font-size:14px}
+@media print{nav.tabs,.row-actions,.btn{display:none}body{background:#fff}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div><div class="eyebrow">TNDA 前導甄選 — ANALYSIS</div><h1>統計儀表板</h1></div>
+    <div class="meta"><span id="back"></span><br><span id="meta">尚未載入資料</span></div>
+  </div>
+</header>
+
+<nav class="tabs"><div class="wrap" id="tabs"></div></nav>
+
+<div class="wrap">
+  <section class="pane" id="pane-load">
+    <h2 class="sec">載入資料</h2>
+    <p class="lede">三種來源擇一，每次載入會取代目前的資料。</p>
+    <div class="grid g2">
+      <div class="card">
+        <div class="eyebrow" style="color:var(--tnda-orange)">A — 從 Google 試算表直接抓</div>
+        <p class="lede" style="margin:10px 0 12px">
+          需先在 <code>config.js</code> 填好 ENDPOINT。一次抓回全部五份表單。
+        </p>
+        <label class="lede" style="display:block;margin-bottom:6px">讀取金鑰
+          <span style="color:var(--ink-300)">（apps-script.gs 裡的 READ_KEY，只存在這台裝置）</span>
+        </label>
+        <input type="password" class="field" id="readkey" autocomplete="off"
+               placeholder="只有主辦知道的那一串字" style="margin-bottom:12px">
+        <button class="btn primary inline" id="btn-fetch">抓取最新資料</button>
+      </div>
+      <div class="card">
+        <div class="eyebrow" style="color:var(--tnda-orange)">B — 上傳 CSV</div>
+        <p class="lede" style="margin:10px 0 12px">
+          試算表的每個分頁「檔案 → 下載 → CSV」，可一次選多個檔。
+          檔名或 <code>form</code> 欄會決定它是哪一份表單。
+        </p>
+        <input type="file" id="file" accept=".csv,text/csv" multiple class="field">
+      </div>
+    </div>
+    <div id="load-msg"></div>
+
+    <h2 class="sec">示範資料</h2>
+    <p class="lede">還沒有真實資料時，先產一份假資料看看統計長什麼樣子（不會寫進試算表）。</p>
+    <button class="btn ghost inline" id="btn-demo">產生示範資料</button>
+  </section>
+
+  <section class="pane hide" id="pane-score"></section>
+  <section class="pane hide" id="pane-peer"></section>
+  <section class="pane hide" id="pane-day2"></section>
+  <section class="pane hide" id="pane-brief"></section>
+  <section class="pane hide" id="pane-status"></section>
+  <section class="pane hide" id="pane-roster"></section>
+  <section class="pane hide" id="pane-export"></section>
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+(() => {
+'use strict';
+const T = window.TNDA, A = window.APP;
+const $ = (id) => document.getElementById(id), esc = A.esc;
+
+let DATA = { peer1: [], pair1: [], mentor1: [], observe2: [], team2: [], self2: [] };
+let REVEAL = false;
+
+const TABS = [
+  ['load', '載入資料'], ['score', '錄取總分'], ['peer', 'D1 同儕訊號'],
+  ['day2', 'D2 過程與團隊'], ['brief', '個人回饋摘要'], ['status', '完成度'],
+  ['roster', '名單'], ['export', '匯出'],
+];
+
+/* ════ 通用 ═══════════════════════════════════════════════ */
+/** 一律照學員編號排——和名牌、桌牌、紙本的 NO. 是同一個順序，
+ *  而且同名同姓時姓名排序會把兩個人排在一起，看起來像重複資料。 */
+const byId = (a, b) => String(a.id).localeCompare(String(b.id), undefined, { numeric: true });
+/** 表格與卡片上的人名前綴：編號用等寬字體壓灰，姓名維持主體。 */
+const idTag = (id) => '<span style="font:900 11px/1 var(--font-display);color:var(--ink-300);' +
+  'margin-right:7px">' + esc(id) + '</span>';
+
+const n1 = (x) => x == null ? '—' : (Math.round(x * 10) / 10).toFixed(1);
+const n0 = (x) => x == null ? '—' : String(Math.round(x));
+const pct = (x) => x == null ? '—' : Math.round(x * 100) + '%';
+
+/** 一份表單的所有 1–5 面向（self 與 per 都算）。 */
+function scaleFields(F) {
+  return [].concat(F.self ? F.self.fields : [], F.per ? F.per.fields : [])
+    .filter((f) => f.type === 'scale');
+}
+const FIELDS = {
+  mentor1:  scaleFields(T.FORMS.mentor1),
+  observe2: scaleFields(T.FORMS.observe2),
+  team2:    scaleFields(T.FORMS.team2),
+};
+
+/** 一列的 0–100 分。 */
+const rowScore = (formId, r) => A.weighted100(FIELDS[formId], r);
+
+/** 把列依 key 分群。 */
+function groupBy(rows, keyFn) {
+  const m = {};
+  rows.forEach((r) => { const k = keyFn(r); if (k) (m[k] = m[k] || []).push(r); });
+  return m;
+}
+
+/* ════ 核心計算 ═══════════════════════════════════════════
+   每位候選人：三個來源各自 0–100，再依 SCORING 加權。
+   缺哪一份就照實說缺，不悄悄補值。 */
+function computeAll() {
+  const out = {};
+  T.allStudentIds().forEach((id) => {
+    // 這些畫面都會用 idTag 把編號印在姓名前面，所以姓名本身不用再補編號。
+    out[id] = {
+      id, name: T.nameOf(id), d1: T.d1GroupOf(id), team: T.d2TeamOf(id),
+      parts: {}, detail: {}, flags: [], raters: {},
+    };
+  });
+
+  // D1 業師評分：subject = 候選人編號，可能有多位業師
+  Object.entries(groupBy(DATA.mentor1, (r) => r.subject)).forEach(([name, rows]) => {
+    const p = out[name]; if (!p) return;
+    const scores = rows.map((r) => rowScore('mentor1', r)).filter((x) => x != null);
+    p.parts.mentor1 = A.mean(scores);
+    p.raters.mentor1 = scores.length;
+    p.spread = scores.length > 1 ? Math.max(...scores) - Math.min(...scores) : null;
+    p.detail.mentor1 = FIELDS.mentor1.map((f) => ({
+      f, v: A.mean(rows.map((r) => Number(r[f.k])).filter(Boolean)),
+      ev: rows.map((r) => r[f.k + '_ev']).filter(Boolean),
+    }));
+    p.notes = rows.map((r) => r.notes).filter(Boolean);
+    rows.forEach((r) => String(r.flags || '').split('|').filter(Boolean)
+      .forEach((fl) => { if (!p.flags.includes(fl)) p.flags.push(fl); }));
+  });
+
+  // D2 個人過程觀察：subject = 組員，可能有上下午兩張、多位觀察者
+  Object.entries(groupBy(DATA.observe2, (r) => r.subject)).forEach(([name, rows]) => {
+    const p = out[name]; if (!p) return;
+    const scores = rows.map((r) => rowScore('observe2', r)).filter((x) => x != null);
+    p.parts.observe2 = A.mean(scores);
+    p.raters.observe2 = scores.length;
+    p.detail.observe2 = FIELDS.observe2.map((f) => ({
+      f, v: A.mean(rows.map((r) => Number(r[f.k])).filter(Boolean)), ev: [],
+    }));
+    p.behaviour = rows.map((r) => r.behaviour).filter(Boolean);
+  });
+
+  // D2 團隊成果：subject = 組別，兩題平均後套用到組內每一位
+  const teamScore = {};
+  Object.entries(groupBy(DATA.team2, (r) => r.subject)).forEach(([team, rows]) => {
+    const scores = rows.map((r) => rowScore('team2', r)).filter((x) => x != null);
+    teamScore[team] = {
+      score: A.mean(scores), n: scores.length,
+      byRound: groupBy(rows, (r) => r.round),
+      next: rows.map((r) => r.next).filter(Boolean),
+      strength: rows.map((r) => r.strength).filter(Boolean),
+      gap: rows.map((r) => r.gap).filter(Boolean),
+    };
+  });
+  Object.values(out).forEach((p) => {
+    if (p.team && teamScore[p.team]) {
+      p.parts.team2 = teamScore[p.team].score;
+      p.raters.team2 = teamScore[p.team].n;
+    }
+  });
+
+  // 加權總分：只用已有的部分，並照實標示涵蓋率
+  Object.values(out).forEach((p) => {
+    let w = 0, acc = 0;
+    T.SCORING.forEach((s) => {
+      const v = p.parts[s.form];
+      if (v == null) return;
+      w += s.weight; acc += s.weight * v;
+    });
+    p.coverage = w;
+    p.total = w ? acc / w : null;
+  });
+
+  return { people: out, teamScore };
+}
+
+/* 同儕訊號（peer1，0%） */
+function peerAgg(group) {
+  const roster = T.studentsIn(group);
+  const by = {};
+  roster.forEach((id) => {
+    by[id] = { id, name: T.labelOf(id), received: 0, yes: 0, reasons: {}, quotes: [] };
+  });
+  DATA.peer1.forEach((r) => {
+    const p = by[r.subject]; if (!p) return;
+    p.received++;
+    if (r.willing === 'Y') p.yes++;
+    String(r.reasons || '').split('|').filter(Boolean)
+      .forEach((c) => { p.reasons[c] = (p.reasons[c] || 0) + 1; });
+    if (r.highlight) p.quotes.push(r.highlight);
+  });
+  Object.values(by).forEach((p) => {
+    p.rate = p.received ? p.yes / p.received : null;
+    p.g = p.reasons.G || 0;
+    p.gShare = p.received ? p.g / p.received : 0;
+  });
+  return Object.values(by);
+}
+
+/* 自評 vs 他評落差（self2 + observe2，0%，自我認知訊號） */
+function selfGap() {
+  const out = {};
+  DATA.self2.filter((r) => r.rel === 'self').forEach((r) => {
+    out[r.subject] = out[r.subject] || {};
+    out[r.subject].self = A.mean([Number(r.s_contrib), Number(r.s_collab)].filter(Boolean));
+    out[r.subject].myPart = r.my_part; out[r.subject].doDiff = r.do_diff;
+  });
+  Object.entries(groupBy(DATA.self2.filter((r) => r.rel === 'peer'), (r) => r.subject))
+    .forEach(([id, rows]) => {
+      out[id] = out[id] || {};
+      out[id].byPeers = A.mean(rows.flatMap((r) =>
+        [Number(r.p_contrib), Number(r.p_collab)].filter(Boolean)));
+      out[id].evidence = rows.map((r) => r.p_evidence).filter(Boolean);
+    });
+  Object.values(out).forEach((o) => {
+    o.gap = (o.self != null && o.byPeers != null) ? o.self - o.byPeers : null;
+  });
+  return out;
+}
+
+/* ════ 分頁 ═══════════════════════════════════════════════ */
+function renderTabs(active) {
+  const t = $('tabs'); t.innerHTML = '';
+  TABS.forEach(([k, label]) => {
+    const b = document.createElement('button');
+    b.textContent = label; b.setAttribute('aria-selected', String(k === active));
+    b.onclick = () => go(k); t.appendChild(b);
+  });
+}
+function go(k) {
+  renderTabs(k);
+  TABS.forEach(([n]) => $('pane-' + n).classList.toggle('hide', n !== k));
+  ({ score: renderScore, peer: renderPeer, day2: renderDay2, brief: renderBrief,
+     status: renderStatus, roster: renderRoster, export: renderExport }[k] || (() => {}))();
+  window.scrollTo(0, 0);
+}
+const empty = () => '<div class="empty">還沒有資料。請先到「載入資料」分頁。</div>';
+const hasAny = () => Object.values(DATA).some((a) => a.length);
+
+function stat(k, v, u, on) {
+  return '<div class="stat' + (on ? ' on' : '') + '"><div class="k">' + esc(k) + '</div>' +
+    '<div class="v">' + esc(String(v)) + '</div><div class="u">' + esc(u || '') + '</div></div>';
+}
+function barRow(label, frac, right, cls, rawLabel, mark) {
+  const m = mark == null ? '' :
+    '<span class="mark" style="left:' + Math.round(Math.max(0, Math.min(1, mark)) * 100) + '%"></span>';
+  return '<div class="bar"><span class="t">' + (rawLabel ? label : esc(label)) + '</span>' +
+    '<span class="track"><span class="fill ' + (cls || '') + '" style="width:' +
+    Math.round(Math.max(0, Math.min(1, frac)) * 100) + '%"></span>' + m + '</span>' +
+    '<span class="n">' + esc(right) + '</span></div>';
+}
+
+/* ── 錄取總分 ──────────────────────────────────────────── */
+function renderScore() {
+  const p = $('pane-score');
+  if (!hasAny()) return void (p.innerHTML = empty());
+  const { people } = computeAll();
+  const list = Object.values(people);
+  const scored = list.filter((x) => x.total != null);
+
+  let h = '<h2 class="sec">加權總分</h2>';
+  h += '<p class="lede">' +
+    T.SCORING.map((s) => s.label + ' <b>' + Math.round(s.weight * 100) + '%</b>').join('　+　') +
+    '。同儕評價與自評互評佔 0%，只當訊號，不進總分。<br>' +
+    '<b>「已計入」不是 100% 就代表那個人還缺表單</b>——總分是用現有部分重新歸一算的，' +
+    '在缺件補齊前不要拿來比較。</p>';
+
+  h += '<div class="grid g4">' +
+    stat('已有總分', scored.length, '共 ' + list.length + ' 位', true) +
+    stat('完整計分', list.filter((x) => x.coverage >= 0.999).length, '三份都到齊') +
+    stat('中位數', n1(A.median(scored.map((x) => x.total))), '0–100') +
+    stat('旗標', list.filter((x) => x.flags.length).length, '位有業師旗標') +
+    '</div>';
+
+  h += '<h2 class="sec">逐人明細</h2>' +
+    '<p class="lede">依姓名排序。要看排序請按欄位標題——排序只在這一頁，不代表名次。</p>';
+  h += '<div class="scroll"><table id="score-table"><thead><tr>' +
+    '<th data-k="name">候選人</th><th data-k="d1">D1 組</th><th data-k="team">D2 組</th>' +
+    T.SCORING.map((s) => '<th class="num" data-k="' + s.form + '">' + esc(s.label) +
+      '<br>' + Math.round(s.weight * 100) + '%</th>').join('') +
+    '<th class="num" data-k="spread">業師差距</th>' +
+    '<th class="num" data-k="coverage">已計入</th>' +
+    '<th class="num" data-k="total">總分</th><th>旗標</th>' +
+    '</tr></thead><tbody>' +
+    list.sort(byId).map(scoreRow).join('') +
+    '</tbody></table></div>';
+
+  p.innerHTML = h;
+  bindSort(list);
+}
+
+const FLAG_LABEL = { BORDER: '邊界案例', ATTRIB: '貢獻歸屬待確認', STAR: '特殊亮點' };
+
+/** 一列業師回饋單抽到的卡：上午是角色＋招式，下午是場景＋互動。 */
+function cardsOf(r) {
+  return ['card_archetype', 'card_move', 'card_stage', 'card_interaction']
+    .map((k) => r[k]).filter(Boolean)
+    .map((code) => esc(A.cardLabel(code))).join('<br>') || '—';
+}
+function scoreRow(x) {
+  return '<tr class="' + (x.flags.length ? 'flagged' : '') + '">' +
+    '<td>' + idTag(x.id) + '<b>' + esc(x.name) + '</b></td>' +
+    '<td>' + esc(x.d1) + '</td><td>' + esc(x.team) + '</td>' +
+    T.SCORING.map((s) => '<td class="num">' + n1(x.parts[s.form]) +
+      (x.raters[s.form] > 1 ? '<br><span style="font-weight:400;font-size:10px;color:var(--ink-300)">' +
+        x.raters[s.form] + ' 筆</span>' : '') + '</td>').join('') +
+    '<td class="num">' + (x.spread == null ? '—' : n1(x.spread)) + '</td>' +
+    '<td class="num">' + Math.round((x.coverage || 0) * 100) + '%</td>' +
+    '<td class="big">' + n1(x.total) + '</td>' +
+    '<td>' + x.flags.map((f) => '<span class="pill' + (f === 'STAR' ? '' : ' warn') + '">' +
+      esc(FLAG_LABEL[f] || f) + '</span>').join('') + '</td></tr>';
+}
+function bindSort(list) {
+  const tb = $('score-table'); if (!tb) return;
+  let desc = true;
+  tb.querySelectorAll('th[data-k]').forEach((th) => {
+    th.style.cursor = 'pointer';
+    th.onclick = () => {
+      const k = th.dataset.k;
+      const val = (x) => k === 'total' ? x.total : k === 'coverage' ? x.coverage
+        : k === 'spread' ? x.spread : k === 'name' ? x.id
+        : (x.parts[k] !== undefined ? x.parts[k] : x[k]);
+      list.sort((a, b) => {
+        const va = val(a), vb = val(b);
+        if (typeof va === 'string' || typeof vb === 'string')
+          return String(va || '').localeCompare(String(vb || ''), 'zh-Hant') * (desc ? -1 : 1);
+        return ((vb == null ? -1 : vb) - (va == null ? -1 : va)) * (desc ? 1 : -1);
+      });
+      desc = !desc;
+      tb.querySelector('tbody').innerHTML = list.map(scoreRow).join('');
+    };
+  });
+}
+
+/* ── D1 同儕訊號 ───────────────────────────────────────── */
+function renderPeer() {
+  const p = $('pane-peer');
+  if (!DATA.peer1.length) return void (p.innerHTML = '<div class="empty">還沒有同儕評價資料。</div>');
+  const RMAP = {};
+  T.FORMS.peer1.per.fields.find((f) => f.k === 'reasons').options
+    .forEach((o) => { RMAP[o.v] = o; });
+
+  let h = '';
+  T.d1Groups().forEach((g) => {
+    const ps = peerAgg(g).filter((x) => x.received > 0);
+    if (!ps.length) return;
+    const med = A.median(ps.map((x) => x.rate));
+
+    h += '<h2 class="sec">' + esc(g) + ' — 合作意願分布</h2>';
+    h += '<p class="lede">這不是排行榜，也不計入總分。它回答的是「這個 cohort 願不願意一起工作」——' +
+      '中位數 <b>' + pct(med) + '</b> 是這一組的基線，個別高低只在明顯偏離基線時才值得看。</p>';
+    h += '<div class="card"><div class="bars">' +
+      ps.slice().sort(byId)
+        .map((x) => barRow(x.name, x.rate || 0,
+          pct(x.rate) + ' (' + x.yes + '/' + x.received + ')', 'acc', false, med)).join('') +
+      '</div><div class="legend"><span><i></i>想一起做的比例</span>' +
+      '<span><i class="line"></i>組內中位數 ' + pct(med) + '</span>' +
+      '<span>一票約 ' + Math.round(100 / (ps[0].received || 14)) + ' 個百分點，不要過度解讀小差距</span>' +
+      '</div></div>';
+
+    const tot = {};
+    DATA.peer1.forEach((r) => {
+      if (T.d1GroupOf(r.subject) !== g) return;
+      String(r.reasons || '').split('|').filter(Boolean).forEach((c) => { tot[c] = (tot[c] || 0) + 1; });
+    });
+    const max = Math.max(1, ...Object.values(tot));
+    h += '<h2 class="sec">' + esc(g) + ' — 這一組「看見了什麼」</h2>' +
+      '<p class="lede">G（尚未看見足夠證據）偏高代表發表時間或曝光不足，' +
+      '處置方式是給舞台，不是扣分。</p>' +
+      '<div class="card"><div class="bars">' +
+      Object.values(RMAP).map((o) => barRow('<b>' + o.v + '</b>' + esc(o.label),
+        (tot[o.v] || 0) / max, (tot[o.v] || 0) + ' 次', o.positive ? 'acc' : 'mut', true)).join('') +
+      '</div></div>';
+  });
+
+  h += '<h2 class="sec">Day 2 分組配對</h2>' +
+    '<div class="warnbox"><b>這一段會揭露「誰選了誰」。</b>兩張表都向學員承諾不公布，' +
+    '所以預設關閉，只有 17:00 編 Day2 分組時才打開，且不得對學員公布名單以外的細節。</div>' +
+    '<div class="row-actions"><label class="sw"><input type="checkbox" id="reveal"' +
+    (REVEAL ? ' checked' : '') + '> 我了解，開啟主辦模式</label></div>';
+
+  if (REVEAL) h += pairingHTML();
+  p.innerHTML = h;
+  const c = $('reveal'); if (c) c.onchange = () => { REVEAL = c.checked; renderPeer(); };
+}
+
+/* 17:00 分組用：先看「選一位最想同組的人」的互選，那是硬配對；
+   同儕評價的雙向 Y 只是備援參考，因為一個人可以對很多人說 Y。 */
+function pairingHTML() {
+  let h = '';
+
+  const pick = {};   // 誰選了誰
+  DATA.pair1.forEach((r) => { if (r.choice) pick[r.submitter] = r.choice; });
+  const submitted = Object.keys(pick);
+
+  const matched = [], oneWay = [];
+  submitted.forEach((a) => {
+    const b = pick[a];
+    if (pick[b] === a) { if (a < b) matched.push([a, b]); }
+    else oneWay.push([a, b]);
+  });
+  const paired = new Set(matched.flat());
+  const unpaired = T.allStudentIds().filter((id) => !paired.has(id));
+
+  h += '<h2 class="sec">互選成功　' + matched.length + ' 對</h2>' +
+    '<p class="lede">兩個人互相選到對方，直接成組。' +
+    '已交 <b>' + submitted.length + '</b> / ' + T.allStudentIds().length + ' 人。</p>' +
+    (matched.length
+      ? '<div class="card"><div class="grid g3">' + matched.map(([a, b]) =>
+          '<div style="border:2px solid var(--tnda-orange);padding:10px 12px;font-size:13.5px">' +
+          esc(T.labelOf(a)) + '　⇄　' + esc(T.labelOf(b)) + '</div>').join('') + '</div></div>'
+      : '<div class="card"><span class="sub">還沒有互選成功的配對。</span></div>');
+
+  // 被幾個人選為第一志願——單向選擇不另開一區，併進這裡當一欄，
+  // 否則 30 個人每人一格會排掉整個螢幕。
+  const nominated = {};
+  submitted.forEach((a) => { nominated[pick[a]] = (nominated[pick[a]] || 0) + 1; });
+
+  h += '<h2 class="sec">還沒配到　' + unpaired.length + ' 人</h2>' +
+    '<p class="lede">這些人要現場自行找人湊滿三人。' +
+    '「他選了誰」旁邊是對方目前的狀態，湊組時可以參考——<b>不要在台上唸出來</b>。' +
+    '「被選次數」高又還沒配到的人，通常是最好牽線的對象。</p>' +
+    '<div class="scroll"><table><thead><tr><th>編號／姓名</th>' +
+    '<th class="num">被選次數</th><th>他選了誰</th><th>對方的狀態</th><th>理由</th>' +
+    '</tr></thead><tbody>' +
+    unpaired.map((id) => {
+      const target = pick[id];
+      const why = (DATA.pair1.find((r) => r.submitter === id) || {}).why || '';
+      const state = !target ? '—'
+        : paired.has(target) ? '已跟別人配對'
+        : pick[target] ? '選了 ' + T.labelOf(pick[target])
+        : '還沒交';
+      return '<tr><td>' + idTag(id) + '<b>' + esc(T.nameOf(id)) + '</b></td>' +
+        '<td class="num">' + (nominated[id] || 0) + '</td>' +
+        '<td>' + (target ? esc(T.labelOf(target)) : '<i style="color:var(--ink-300)">未交</i>') + '</td>' +
+        '<td>' + esc(state) + '</td>' +
+        '<td style="font-size:12.5px">' + esc(why) + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+
+  // 備援：同儕評價的雙向 Y。一個人可以對很多人說「想」，所以配對數會很多——
+  // 一對一格會排出上百格，改成一人一列、對象收在同一格。
+  h += '<h2 class="sec">備援參考：同儕評價的雙向「想一起做」</h2>' +
+    '<p class="lede">同儕評價一個人可以對很多位都說「想一起做」，所以這裡不是「一人一組」，' +
+    '而是<b>每個人所有互相有意願的對象</b>。<b>湊不出三人時，從當事人那一列挑一個還沒配到的。</b>' +
+    '「互選數 0」的人要優先幫他牽線。</p>';
+
+  T.d1Groups().forEach((g) => {
+    const yes = new Set(DATA.peer1
+      .filter((r) => r.willing === 'Y' && T.d1GroupOf(r.subject) === g)
+      .map((r) => r.submitter + '→' + r.subject));
+    const rows = T.studentsIn(g).map((id) => ({
+      id,
+      mates: T.studentsIn(g).filter((o) =>
+        o !== id && yes.has(id + '→' + o) && yes.has(o + '→' + id)),
+    }));
+    h += '<h2 class="sec" style="border-bottom-width:1px">' + esc(g) + '</h2>' +
+      '<div class="scroll"><table><thead><tr><th>編號／姓名</th><th class="num">互選數</th>' +
+      '<th>互相想一起做的人</th></tr></thead><tbody>' +
+      rows.map((r) => '<tr class="' + (r.mates.length ? '' : 'flagged') + '">' +
+        '<td>' + idTag(r.id) + '<b>' + esc(T.nameOf(r.id)) + '</b></td>' +
+        '<td class="num">' + r.mates.length + '</td>' +
+        '<td style="font-size:12.5px;line-height:1.9">' +
+          (r.mates.length
+            ? r.mates.map((m) => '<span class="mate' + (paired.has(m) ? ' taken' : '') + '">' +
+                esc(T.labelOf(m)) + '</span>').join('')
+            : '<i style="color:var(--ink-300)">沒有互選對象</i>') +
+        '</td></tr>').join('') + '</tbody></table></div>';
+  });
+
+  h += '<p class="lede" style="margin-top:10px">' +
+    '<span class="mate">白底</span>＝還沒配到，可以牽線　' +
+    '<span class="mate taken">灰底</span>＝已經在別組了</p>';
+
+  return h;
+}
+
+/* ── D2 過程與團隊 ─────────────────────────────────────── */
+function renderDay2() {
+  const p = $('pane-day2');
+  if (!DATA.observe2.length && !DATA.team2.length && !DATA.self2.length)
+    return void (p.innerHTML = '<div class="empty">還沒有 Day2 資料。</div>');
+  const { people, teamScore } = computeAll();
+  let h = '';
+
+  if (DATA.team2.length) {
+    const teams = Object.keys(teamScore).sort();
+    const max = 100;
+    h += '<h2 class="sec">團隊成果（15%）</h2>' +
+      '<p class="lede">兩題（上午角色招式 / 下午場景互動）平均後，套用到組內每一位成員。' +
+      '同一組的成員這一項分數相同。</p>' +
+      '<div class="card"><div class="bars">' +
+      teams.map((t) => barRow(t + '　' + T.teamMembers(t).map(T.labelOf).join('、'),
+        (teamScore[t].score || 0) / max, n1(teamScore[t].score),
+        'acc')).join('') + '</div></div>';
+
+    h += '<h2 class="sec">各面向與抽到的卡</h2>' +
+      '<p class="lede">卡片代號來自業師回饋單的下拉選單，跟印刷牌組一致。' +
+      '同一組上下午各一列。</p>' +
+      '<div class="scroll"><table><thead><tr><th>組別</th><th>題目</th><th>抽到的卡</th>' +
+      FIELDS.team2.map((f) => '<th class="num">' + esc(f.label) + '<br>' + f.weight + '%</th>').join('') +
+      '<th class="num">加權</th><th>若多兩小時，先改什麼</th></tr></thead><tbody>' +
+      teams.map((t) => DATA.team2.filter((r) => r.subject === t)
+        .sort((a, b) => String(a.round).localeCompare(String(b.round)))
+        .map((r) => '<tr><td><b>' + esc(t) + '</b></td>' +
+          '<td style="font-size:12.5px">' + esc(String(r.round || '').replace(/ ·.*/, '')) + '</td>' +
+          '<td style="font-size:12px">' + cardsOf(r) + '</td>' +
+          FIELDS.team2.map((f) => '<td class="num">' + n1(Number(r[f.k]) || null) + '</td>').join('') +
+          '<td class="big">' + n1(rowScore('team2', r)) + '</td>' +
+          '<td style="font-size:12.5px">' + esc(r.next || '') + '</td></tr>').join('')
+      ).join('') + '</tbody></table></div>';
+  }
+
+  if (DATA.observe2.length) {
+    h += '<h2 class="sec">個人過程觀察（30%，主要訊號）</h2>' +
+      '<p class="lede">五個面向等權。同一人若有上午與下午兩張、或多位觀察者，取平均。</p>' +
+      '<div class="scroll"><table><thead><tr><th>候選人</th><th>D2 組</th>' +
+      FIELDS.observe2.map((f) => '<th class="num">' + esc(f.label) + '</th>').join('') +
+      '<th class="num">加權</th><th class="num">筆數</th></tr></thead><tbody>' +
+      Object.values(people).filter((x) => x.parts.observe2 != null)
+        .sort(byId).map((x) =>
+        '<tr><td>' + idTag(x.id) + '<b>' + esc(x.name) + '</b></td><td>' + esc(x.team) + '</td>' +
+        x.detail.observe2.map((d) => '<td class="num">' + n1(d.v) + '</td>').join('') +
+        '<td class="big">' + n1(x.parts.observe2) + '</td>' +
+        '<td class="num">' + x.raters.observe2 + '</td></tr>').join('') +
+      '</tbody></table></div>';
+  }
+
+  if (DATA.self2.length) {
+    const gaps = selfGap();
+    const rows = Object.entries(gaps).filter(([id, o]) => o.gap != null && T.isKnown(id))
+      .sort((a, b) => Math.abs(b[1].gap) - Math.abs(a[1].gap));
+    h += '<h2 class="sec">自評 vs 隊友評（0%，自我認知訊號）</h2>' +
+      '<p class="lede">兩者都是 1–5。差距為正代表<b>自評高於隊友評</b>，為負代表低估自己。' +
+      '這一欄不進總分，但和 D1「自我認知與成長性」那一項對照著看很有用：' +
+      '<b>±1.0 以上值得在合議時提出來</b>，差距本身不是缺點，說不出理由才是。</p>' +
+      '<div class="scroll"><table><thead><tr><th>候選人</th><th class="num">自評</th>' +
+      '<th class="num">隊友評</th><th class="num">差距</th><th>隊友寫的具體事例</th>' +
+      '</tr></thead><tbody>' +
+      rows.map(([id, o]) => '<tr class="' + (Math.abs(o.gap) >= 1 ? 'flagged' : '') + '">' +
+        '<td>' + idTag(id) + '<b>' + esc(T.nameOf(id)) + '</b></td>' +
+        '<td class="num">' + n1(o.self) + '</td>' +
+        '<td class="num">' + n1(o.byPeers) + '</td>' +
+        '<td class="num">' + (o.gap > 0 ? '+' : '') + n1(o.gap) + '</td>' +
+        '<td style="font-size:12.5px">' + esc((o.evidence || []).join(' / ')) + '</td></tr>').join('') +
+      '</tbody></table></div>';
+  }
+
+  p.innerHTML = h;
+}
+
+/* ── 個人回饋摘要 ──────────────────────────────────────── */
+function renderBrief() {
+  const p = $('pane-brief');
+  if (!hasAny()) return void (p.innerHTML = empty());
+  const { people, teamScore } = computeAll();
+  const gaps = selfGap();
+
+  let h = '<h2 class="sec">個人回饋摘要</h2>' +
+    '<p class="lede">每位候選人一張，對應紙本「個人回饋摘要」那一頁。' +
+    '橘框＝有需要業師主動處理的訊號。同儕亮點句已去識別，可以直接用。</p>' +
+    '<div class="row-actions"><button class="btn primary inline" id="brief-text">' +
+    '產生全部文字（可貼進回饋單）</button></div><div id="brief-out"></div>';
+
+  h += '<div class="grid g2" style="margin-top:20px">';
+  Object.values(people).sort(byId).forEach((x) => {
+    const peer = peerOf(x.id);
+    const gp = gaps[x.id] || {};
+    const lowExp = peer && peer.received && peer.gShare >= 0.3;
+    const flag = x.flags.some((f) => f !== 'STAR') || lowExp || Math.abs(gp.gap || 0) >= 1;
+
+    h += '<div class="person' + (flag ? ' flag' : '') + '">' +
+      '<div><h3>' + idTag(x.id) + esc(x.name) + '</h3><span class="sub">' +
+      esc(x.d1) + (x.team ? '　·　' + esc(x.team) : '') + '</span></div>' +
+      '<div class="rate"><span class="big">' + n1(x.total) + '</span>' +
+      '<span class="cmp">加權總分（已計入 ' + Math.round((x.coverage || 0) * 100) + '%）</span></div>';
+
+    h += '<div class="bars">' + T.SCORING.map((s) =>
+      barRow(s.label, (x.parts[s.form] || 0) / 100, n1(x.parts[s.form]), 'acc')).join('') + '</div>';
+
+    if (x.detail.mentor1) {
+      h += '<div class="bars" style="border-top:1px solid var(--ink-100);padding-top:10px">' +
+        x.detail.mentor1.map((d) => barRow(d.f.label, (d.v || 0) / 5, n1(d.v) + ' / 5', 'mut')).join('') +
+        '</div>';
+    }
+
+    const pills = x.flags.map((f) => '<span class="pill' + (f === 'STAR' ? '' : ' warn') + '">' +
+      esc(FLAG_LABEL[f] || f) + '</span>').join('') +
+      (lowExp ? '<span class="pill warn">同儕曝光不足 G ' + peer.g + '</span>' : '') +
+      (Math.abs(gp.gap || 0) >= 1 ? '<span class="pill warn">自評落差 ' +
+        (gp.gap > 0 ? '+' : '') + n1(gp.gap) + '</span>' : '');
+    if (pills) h += '<div>' + pills + '</div>';
+
+    const quotes = [].concat(
+      (x.detail.mentor1 || []).flatMap((d) => d.ev.map((e) => d.f.label + '：' + e)),
+      (peer ? peer.quotes : []).map((q) => '同儕：' + q),
+      (x.behaviour || []).map((b) => '過程：' + b));
+    if (quotes.length) {
+      h += '<div class="quotes">' + quotes.slice(0, 8).map((q) =>
+        '<div>' + esc(q) + '</div>').join('') + '</div>';
+    }
+    h += '</div>';
+  });
+  h += '</div>';
+  p.innerHTML = h;
+
+  $('brief-text').onclick = () => {
+    let t = '';
+    Object.values(people).sort(byId).forEach((x) => {
+      if (x.total == null) return;
+      const peer = peerOf(x.id);
+      t += '════ ' + x.id + '　' + x.name + '　' + x.d1 + (x.team ? ' / ' + x.team : '') + ' ════\n' +
+        '加權總分 ' + n1(x.total) + '（已計入 ' + Math.round(x.coverage * 100) + '%）\n' +
+        T.SCORING.map((s) => '  ' + s.label + ' ' + n1(x.parts[s.form])).join('\n') + '\n';
+      if (x.detail.mentor1) {
+        t += '\n【D1 各面向 1–5】\n' +
+          x.detail.mentor1.map((d) => '  ' + d.f.label + ' ' + n1(d.v) +
+            (d.ev.length ? '　證據：' + d.ev.join('；') : '')).join('\n') + '\n';
+      }
+      if (peer && peer.received) {
+        const top = Object.entries(peer.reasons).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([c]) => c);
+        t += '\n【同儕訊號（不計分）】\n  ' + peer.yes + '/' + peer.received +
+          ' 位同組同學表示想一起工作，最常指認：' + top.join('、') + '\n' +
+          (peer.quotes.length ? peer.quotes.map((q) => '  · ' + q).join('\n') + '\n' : '');
+      }
+      if (x.behaviour && x.behaviour.length) {
+        t += '\n【D2 過程觀察到的具體行為】\n' + x.behaviour.map((b) => '  · ' + b).join('\n') + '\n';
+      }
+      if (x.team && teamScore[x.team]) {
+        t += '\n【D2 團隊】' + x.team + '　' + n1(teamScore[x.team].score) + '\n' +
+          (teamScore[x.team].next.length ? '  下一步：' + teamScore[x.team].next.join(' / ') + '\n' : '');
+      }
+      t += '\n\n';
+    });
+    $('brief-out').innerHTML = '<textarea class="field" style="min-height:420px;margin-top:16px;' +
+      'font:400 12px/1.6 ui-monospace,Menlo,monospace"></textarea>';
+    $('brief-out').querySelector('textarea').value = t;
+  };
+}
+let PEER_CACHE = null;
+function peerOf(id) {
+  if (!PEER_CACHE) {
+    PEER_CACHE = {};
+    T.d1Groups().forEach((g) => peerAgg(g).forEach((x) => { PEER_CACHE[x.id] = x; }));
+  }
+  return PEER_CACHE[id];
+}
+
+/* ── 完成度 ────────────────────────────────────────────── */
+function renderStatus() {
+  const p = $('pane-status');
+  let h = '<h2 class="sec">完成度</h2><p class="lede">現場催件用。橘框＝還沒交。</p>';
+
+  const box = (title, items) =>
+    '<h2 class="sec">' + esc(title) + '　' + items.filter((i) => i.ok).length + ' / ' + items.length + '</h2>' +
+    '<div class="card"><div class="grid g4">' + items.map((i) =>
+      '<div style="border:2px solid ' + (i.ok ? 'var(--ink-200)' : 'var(--tnda-orange)') +
+      ';padding:10px 12px;font-size:13.5px' + (i.ok ? ';color:var(--ink-500)' : ';font-weight:700') + '">' +
+      esc(i.label) + (i.ok ? '' : '　未交') + '</div>').join('') + '</div></div>';
+
+  // 收齊的定義寫在 app.js 的 progressItems，現場流程頁用的是同一份，
+  // 兩邊的數字才不會兜不起來。
+  [['peer1', 'D1 同儕評價單（學員）'],
+   ['pair1', 'D1 選一位最想同組的人（學員，17:00）'],
+   ['mentor1', 'D1 作品集答辯評分表（每位候選人）'],
+   ['observe2', 'D2 個人過程觀察表（每組每時段）'],
+   ['team2', 'D2 業師回饋單（每組每題）'],
+   ['self2', 'D2 自評與團隊內互評單（學員）'],
+  ].forEach(([id, title]) => { h += box(title, A.progressItems(id, DATA[id])); });
+
+  p.innerHTML = h;
+}
+
+/* ── 名單 ──────────────────────────────────────────────── */
+function renderRoster() {
+  const p = $('pane-roster');
+  p.innerHTML = '<h2 class="sec">編輯學生姓名</h2>' +
+    '<p class="lede">報名時打錯、後來改名、或想改成大家平常叫的名字，都在這裡改。' +
+    '改完存檔後，<b>所有裝置</b>（學員的表單頁、業師的流程頁、這個儀表板）下次開啟就會用新名字。</p>' +
+    '<div class="warnbox"><b>只能改姓名，不能改編號。</b>編號是所有資料的鍵——' +
+    '同儕評價、評分表、分組全部靠它串起來，改了等於換一個人，已收的資料會對不上。' +
+    '真的要換人，請改 <code>config.js</code> 並重新上架。</div>' +
+    '<div class="row-actions">' +
+      '<button class="btn primary inline" id="rs-save">儲存到試算表</button>' +
+      '<button class="btn ghost inline" id="rs-reset">還原這一頁的修改</button>' +
+      '<span class="stamp" id="rs-msg"></span>' +
+    '</div>' +
+    '<div class="scroll" style="margin-top:14px"><table><thead><tr>' +
+    '<th>編號</th><th>姓名</th><th>D1 組</th><th>D2 組</th></tr></thead><tbody>' +
+    T.STUDENTS.map((s) =>
+      '<tr><td class="num">' + esc(s.id) + '</td>' +
+      '<td><input class="field" data-id="' + esc(s.id) + '" value="' + esc(s.name) + '" ' +
+        'style="padding:7px 9px;font-weight:700"></td>' +
+      '<td>' + esc(s.d1 || '') + '</td><td>' + esc(s.d2 || '') + '</td></tr>').join('') +
+    '</tbody></table></div>';
+
+  const inputs = () => [...p.querySelectorAll('input[data-id]')];
+  const msg = (t) => { $('rs-msg').textContent = t; };
+
+  $('rs-reset').onclick = () => { renderRoster(); msg('已還原成目前生效的名單。'); };
+  $('rs-save').onclick = async () => {
+    const map = {};
+    let blank = 0;
+    inputs().forEach((el) => {
+      const v = el.value.trim();
+      if (!v) { blank++; return; }
+      map[el.dataset.id] = v;
+    });
+    if (blank) return msg('有 ' + blank + ' 格是空的，姓名不能留空。');
+    msg('儲存中…');
+    try {
+      await A.saveNames(map);
+      PEER_CACHE = null;
+      msg('已存到試算表，' + Object.keys(map).length + ' 筆。其他裝置下次開啟就會更新。');
+    } catch (err) {
+      msg('存檔失敗：' + (err.message || err));
+    }
+  };
+}
+
+/* ── 匯出 ──────────────────────────────────────────────── */
+function renderExport() {
+  const p = $('pane-export');
+  if (!hasAny()) return void (p.innerHTML = empty());
+  p.innerHTML = '<h2 class="sec">匯出</h2>' +
+    '<p class="lede">「總分表」給合議會議；「原始資料」是備份，欄位與試算表一致。</p>' +
+    '<div class="row-actions">' +
+    '<button class="btn primary inline" id="ex-score">下載總分表 CSV</button>' +
+    Object.keys(DATA).filter((k) => DATA[k].length).map((k) =>
+      '<button class="btn ghost inline" data-raw="' + k + '">' + k + ' 原始資料</button>').join('') +
+    '</div>';
+
+  $('ex-score').onclick = () => {
+    const { people } = computeAll();
+    const head = ['編號', '候選人', 'D1組', 'D2組'].concat(
+      T.SCORING.map((s) => s.label + ' ' + Math.round(s.weight * 100) + '%'),
+      ['業師差距', '已計入', '加權總分', '旗標', '同儕想一起', '自評落差']);
+    const gaps = selfGap();
+    const rows = Object.values(people).sort(byId)
+      .map((x) => {
+        const pr = peerOf(x.id), gp = gaps[x.id] || {};
+        return [x.id, T.nameOf(x.id), x.d1, x.team].concat(
+          T.SCORING.map((s) => n1(x.parts[s.form])),
+          [x.spread == null ? '' : n1(x.spread), Math.round((x.coverage || 0) * 100) + '%',
+           n1(x.total), x.flags.map((f) => FLAG_LABEL[f] || f).join(' '),
+           pr && pr.received ? pr.yes + '/' + pr.received : '',
+           gp.gap == null ? '' : n1(gp.gap)]);
+      });
+    A.download('tnda_總分表.csv', A.toCSV(head, rows));
+  };
+  p.querySelectorAll('[data-raw]').forEach((b) => {
+    b.onclick = () => {
+      const k = b.dataset.raw;
+      const cols = A.columnsOf(T.FORMS[k]);
+      A.download(k + '_raw.csv', A.toCSV(cols, DATA[k].map((r) => cols.map((c) => r[c]))));
+    };
+  });
+}
+
+/* ════ 載入 ═══════════════════════════════════════════════ */
+function setData(d, source) {
+  Object.keys(DATA).forEach((k) => { DATA[k] = (d[k] || []).map(norm); });
+  PEER_CACHE = null;
+  const n = Object.values(DATA).reduce((a, b) => a + b.length, 0);
+  $('meta').innerHTML = esc(source) + '<br>' + n + ' 列　·　' +
+    Object.keys(DATA).filter((k) => DATA[k].length).join(' / ');
+  go('score');
+}
+/** 欄位一律轉字串，數值欄由 Number() 在計算時處理。 */
+function norm(r) {
+  const o = {};
+  Object.keys(r).forEach((k) => { o[k] = r[k] == null ? '' : r[k]; });
+  return o;
+}
+
+$('readkey').value = A.readKey.get();
+$('readkey').oninput = () => A.readKey.set($('readkey').value);
+
+$('btn-fetch').onclick = async () => {
+  const msg = (cls, t) => { $('load-msg').innerHTML = '<div class="msg ' + cls + '">' + esc(t) + '</div>'; };
+  if (!T.ENDPOINT) return msg('err', 'config.js 的 ENDPOINT 還沒填。');
+  msg('', '抓取中…');
+  try {
+    setData(await A.fetchAll(), '來源：Google 試算表');
+  } catch (err) {
+    msg('err', '抓取失敗：' + (err.message || err) +
+      '。若是瀏覽器跨網域限制，改用試算表「檔案 → 下載 → CSV」後在右邊上傳。');
+  }
+};
+
+$('file').onchange = (e) => {
+  const files = [...e.target.files];
+  if (!files.length) return;
+  const acc = {};
+  let left = files.length;
+  files.forEach((f) => {
+    const fr = new FileReader();
+    fr.onload = () => {
+      try {
+        const t = A.parseCSV(String(fr.result).replace(/^﻿/, '').trim());
+        const head = t[0].map((x) => x.trim());
+        t.slice(1).filter((r) => r.length > 1).forEach((r) => {
+          const o = {};
+          head.forEach((hk, i) => { o[hk] = r[i]; });
+          // 表單名稱優先看 form 欄，沒有就看檔名
+          const id = o.form || Object.keys(DATA).find((k) => f.name.indexOf(k) >= 0);
+          if (id && DATA[id] !== undefined) (acc[id] = acc[id] || []).push(o);
+        });
+      } catch (err) { /* 略過壞掉的檔 */ }
+      if (--left === 0) {
+        setData(acc, '來源：' + files.map((x) => x.name).join('、'));
+        $('load-msg').innerHTML = '<div class="msg">載入 ' +
+          Object.keys(acc).map((k) => k + ' ' + acc[k].length + ' 列').join('、') + '。</div>';
+      }
+    };
+    fr.readAsText(f, 'utf-8');
+  });
+};
+
+/* ── 示範資料 ──────────────────────────────────────────── */
+$('btn-demo').onclick = () => {
+  let seed = 20260807;
+  const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  const pick = (a) => a[Math.floor(rnd() * a.length)];
+  const sc = (bias) => Math.max(1, Math.min(5, Math.round(bias + (rnd() - .5) * 1.8)));
+  const QUOTES = ['把玩家卡關的地方講得很具體', '會主動幫別人補說明', '對自己作品的缺點很誠實',
+    '節奏設計的取捨講得清楚', '示範時整組都聽懂了', '被追問時沒有硬拗'];
+  const EV = ['講得出另一個選項為何不採用', '拿得出前後兩版的差異', '被問到假設時主動標出來',
+    '示範時能即時改參數', '把限制卡直接寫進機制'];
+  const d = { peer1: [], pair1: [], mentor1: [], observe2: [], team2: [], self2: [] };
+  const M = T.allMentorIds();
+  const base = {};
+  T.allStudentIds().forEach((id, i) => { base[id] = 2.4 + (i % 7) * 0.35; });
+  // 補上兩個姓名欄，讓示範資料的形狀跟真表單送出來的完全一樣。
+  const named = (o) => Object.assign(o, {
+    submitter_name: T.nameOf(o.submitter),
+    subject_name: T.isKnown(o.subject) ? T.nameOf(o.subject) : o.subject,
+  });
+
+  // peer1
+  T.d1Groups().forEach((g) => {
+    const roster = T.studentsIn(g);
+    roster.forEach((rater, ri) => {
+      if (ri % 9 === 4) return;
+      roster.filter((id) => id !== rater).forEach((target) => {
+        const y = rnd() < (base[target] - 1.6) / 3;
+        const pool = y ? ['A', 'B', 'C', 'D', 'E', 'F'] : ['G', 'G', 'H', 'C'];
+        const rs = [pick(pool)]; if (rnd() < .5) { const x = pick(pool); if (x !== rs[0]) rs.push(x); }
+        d.peer1.push(named({ form: 'peer1', submitter: rater, subject: target, rel: '',
+          willing: y ? 'Y' : 'N', reasons: rs.join('|'),
+          highlight: y && rnd() < .3 ? pick(QUOTES) : '' }));
+      });
+    });
+  });
+  // pair1：每人選一位。刻意讓一部分互選成功、一部分單向、少數未交。
+  T.allStudentIds().forEach((id, i) => {
+    if (i % 11 === 5) return;                       // 少數人沒交
+    const pool = T.allStudentIds().filter((x) => x !== id);
+    // 前幾對刻意互選：01↔02、03↔04…；其餘隨機，製造單向與未配對
+    const idx = T.allStudentIds().indexOf(id);
+    const partner = idx < 12 ? T.allStudentIds()[idx % 2 === 0 ? idx + 1 : idx - 1] : pick(pool);
+    d.pair1.push(named({ form: 'pair1', submitter: id, subject: id, rel: '',
+      choice: partner, why: rnd() < .4 ? pick(EV) : '' }));
+  });
+  // mentor1（兩位業師各評一半，少數重疊）
+  T.allStudentIds().forEach((id, i) => {
+    [M[i % 2]].concat(i % 5 === 0 ? [M[2]] : []).forEach((m) => {
+      const r = named({ form: 'mentor1', submitter: m, subject: id, rel: '', candidate: id,
+        notes: '追問三題都問過。', flags: rnd() < .12 ? pick(['BORDER', 'ATTRIB', 'STAR']) : '' });
+      FIELDS.mentor1.forEach((f) => { r[f.k] = sc(base[id]); r[f.k + '_ev'] = rnd() < .5 ? pick(EV) : ''; });
+      d.mentor1.push(r);
+    });
+  });
+  // observe2 + team2 + self2
+  T.d2Teams().forEach((t, ti) => {
+    const members = T.teamMembers(t);
+    ['上午', '下午'].forEach((slot) => {
+      members.forEach((id) => {
+        const r = named({ form: 'observe2', submitter: M[ti % M.length], subject: id, rel: '',
+          team: t, slot, behaviour: rnd() < .5 ? pick(EV) : '' });
+        FIELDS.observe2.forEach((f) => { r[f.k] = sc(base[id]); });
+        d.observe2.push(r);
+      });
+    });
+    T.FORMS.team2.head.find((f) => f.k === 'round').options.forEach((round, ri) => {
+      const tb = 2.6 + (ti % 5) * 0.4;
+      const deck = (n) => pick(T.CARDS[n]).v;
+      const cards = ri === 0
+        ? { card_archetype: deck('archetype'), card_move: deck('moveLimit') }
+        : { card_stage: deck('stage'), card_interaction: deck('interaction') };
+      const r = named(Object.assign({ form: 'team2', submitter: M[ti % M.length], subject: t, rel: '',
+        team: t, round,
+        strength: '機制講得清楚', gap: '公平性還沒解', next: pick(EV) }, cards));
+      FIELDS.team2.forEach((f) => { r[f.k] = sc(tb); r[f.k + '_ev'] = ''; });
+      d.team2.push(r);
+    });
+    members.forEach((me) => {
+      d.self2.push(named({ form: 'self2', submitter: me, subject: me, rel: 'self',
+        s_contrib: sc(base[me] + (rnd() < .3 ? 1.2 : 0)), s_collab: sc(base[me] + .3),
+        my_part: '負責機制與數值', do_diff: '會更早做測試' }));
+      members.filter((id) => id !== me).forEach((id) => {
+        d.self2.push(named({ form: 'self2', submitter: me, subject: id, rel: 'peer',
+          p_contrib: sc(base[id]), p_collab: sc(base[id] + .2), p_evidence: pick(EV) }));
+      });
+    });
+  });
+  setData(d, '來源：示範資料（非真實）');
+};
+
+A.guard(document.body);
+A.mountBack($('back'), 'staff.html');
+A.syncNames();
+renderTabs('load');
+})();
+</script>
+</body>
+</html>

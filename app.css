@@ -1,0 +1,116 @@
+/* TNDA 電子表單系統 — 共用樣式
+   品牌只有三色（活力橘 / 光芒白 / 黑），無圓角、無陰影、無模糊。
+   token 直接內嵌，讓每個頁面都能單獨部署。 */
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap");
+
+:root{
+  --tnda-orange:#FF4F2C; --tnda-white:#FFF; --tnda-black:#000;
+  --orange-600:#E03F1F; --orange-100:#FFE2DA;
+  --ink-500:#4D4D4D; --ink-300:#8C8C8C; --ink-200:#C4C4C4; --ink-100:#E6E6E6; --ink-050:#F5F5F5;
+  --white-a70:rgba(255,255,255,.7);
+  --font-display:"Orbitron","Eurostile","Noto Sans TC",sans-serif;
+  --font-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font:400 16px/1.6 var(--font-body);color:var(--tnda-black);background:var(--ink-050);
+     -webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+button,input,textarea,select{font:inherit;color:inherit}
+button{border:0;background:none;cursor:pointer}
+a{color:var(--tnda-orange);text-decoration:none}
+.hide{display:none !important}
+.eyebrow{font:700 10px/1.2 var(--font-display);letter-spacing:.14em;text-transform:uppercase}
+code{font-family:ui-monospace,Menlo,monospace;font-size:.88em;background:var(--ink-050);padding:1px 4px}
+
+/* ── shell ─────────────────────────────────────────────── */
+.app{max-width:680px;margin:0 auto;background:var(--tnda-white);min-height:100dvh;
+     display:flex;flex-direction:column;box-shadow:0 0 0 1px var(--ink-100)}
+.bar{background:var(--tnda-orange);color:var(--tnda-white);
+     padding:14px 18px calc(14px + env(safe-area-inset-top));
+     display:flex;justify-content:space-between;align-items:flex-end;gap:12px;position:sticky;top:0;z-index:20}
+.bar h1{margin:2px 0 0;font:700 20px/1.2 var(--font-body)}
+.bar .who{font:400 12px/1.4 var(--font-body);text-align:right;white-space:nowrap}
+.bar.dark{background:var(--tnda-black)}
+.body{flex:1;padding:20px 18px 150px}
+
+/* ── blocks ────────────────────────────────────────────── */
+.note{border:2px solid var(--tnda-black);padding:14px;font-size:13.5px;line-height:1.65}
+.note strong{color:var(--tnda-orange)}
+.label{font:700 10px/1.2 var(--font-display);letter-spacing:.14em;color:var(--tnda-orange);
+       text-transform:uppercase;margin:26px 0 10px;display:block}
+.label .w{color:var(--tnda-black);font-size:11px;margin-left:8px}
+.hint{font-size:12px;color:var(--ink-500);margin-top:8px;line-height:1.55}
+.sect{border:2px solid var(--tnda-black);padding:16px;margin-top:22px}
+.sect.accent{border-color:var(--tnda-orange)}
+.sect > .label:first-child{margin-top:0}
+
+.field{width:100%;padding:12px 13px;border:2px solid var(--tnda-black);
+       background:var(--tnda-white);border-radius:0;-webkit-appearance:none}
+.field:focus{outline:3px solid var(--tnda-orange);outline-offset:-3px}
+textarea.field{min-height:90px;resize:vertical;line-height:1.6}
+
+.btn{display:block;width:100%;padding:16px;background:var(--tnda-black);color:var(--tnda-white);
+     font:700 16px/1.2 var(--font-body);text-align:center;border:2px solid var(--tnda-black)}
+.btn.primary{background:var(--tnda-orange);border-color:var(--tnda-orange)}
+.btn.ghost{background:var(--tnda-white);color:var(--tnda-black)}
+.btn.inline{display:inline-block;width:auto;padding:12px 18px;font-size:14px}
+.btn:disabled{background:var(--ink-200);border-color:var(--ink-200);color:var(--tnda-white);cursor:not-allowed}
+
+/* ── pick lists ────────────────────────────────────────── */
+.pick{display:grid;gap:8px}
+.pick.cols{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.pick button{border:2px solid var(--tnda-black);padding:13px;text-align:left;
+             font-weight:700;background:var(--tnda-white);line-height:1.35}
+.pick button[aria-pressed="true"]{background:var(--tnda-black);color:var(--tnda-white)}
+
+/* ── scale 1–5 ─────────────────────────────────────────── */
+.scale{display:flex;gap:7px}
+.scale button{flex:1;max-width:56px;aspect-ratio:1;border:2px solid var(--tnda-black);
+              background:var(--tnda-white);font:900 16px/1 var(--font-display)}
+.scale button[aria-pressed="true"]{background:var(--tnda-orange);border-color:var(--tnda-orange);color:var(--tnda-white)}
+
+/* ── choice / chips ────────────────────────────────────── */
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.choice button{border:2px solid var(--tnda-black);padding:18px 12px;font-weight:700;font-size:16px;
+               background:var(--tnda-white);line-height:1.3}
+.choice button small{display:block;font-weight:400;font-size:11.5px;color:var(--ink-500);margin-top:4px}
+.choice button[aria-pressed="true"]{background:var(--tnda-orange);border-color:var(--tnda-orange);color:var(--tnda-white)}
+.choice button[aria-pressed="true"] small{color:var(--tnda-white)}
+.choice button[data-v="N"][aria-pressed="true"]{background:var(--tnda-black);border-color:var(--tnda-black)}
+
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chips button{border:2px solid var(--ink-200);padding:9px 11px;font-size:13.5px;
+              font-weight:500;background:var(--tnda-white)}
+.chips button b{font-family:var(--font-display);font-weight:900;margin-right:5px}
+.chips button[aria-pressed="true"]{border-color:var(--tnda-black);background:var(--tnda-black);color:var(--tnda-white)}
+.chips button:disabled{opacity:.35}
+
+/* ── roster rows ───────────────────────────────────────── */
+.progress{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.progress .track{display:block;flex:1;height:8px;background:var(--ink-100)}
+.progress .fill{display:block;height:100%;background:var(--tnda-orange);transition:width .18s ease-out}
+.progress .n{font:900 13px/1 var(--font-display);white-space:nowrap}
+
+.row{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;width:100%;
+     text-align:left;padding:13px 4px;border-bottom:1px solid var(--ink-100);background:none}
+.row .no{font:700 12px/1 var(--font-display);color:var(--ink-300)}
+.row .nm{font-weight:700;font-size:15.5px}
+.row .sub{display:block;font-weight:400;font-size:12px;color:var(--ink-500);margin-top:2px}
+.tag{font:700 11px/1 var(--font-display);letter-spacing:.08em;padding:6px 9px;
+     border:2px solid var(--ink-200);color:var(--ink-300);white-space:nowrap}
+.tag.y,.tag.on{border-color:var(--tnda-orange);background:var(--tnda-orange);color:var(--tnda-white)}
+.tag.n{border-color:var(--tnda-black);color:var(--tnda-black)}
+
+/* ── sticky footer ─────────────────────────────────────── */
+.foot{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--tnda-white);
+      border-top:2px solid var(--tnda-black);padding:12px 18px calc(12px + env(safe-area-inset-bottom))}
+.foot .inner{max-width:680px;margin:0 auto;display:grid;gap:8px}
+.foot .inner.two{grid-template-columns:1fr 1.4fr}
+
+/* ── status ────────────────────────────────────────────── */
+.status{font-size:13px;padding:12px 14px;border:2px solid var(--tnda-black);margin-top:14px;line-height:1.6}
+.status.ok{background:var(--tnda-black);color:var(--tnda-white)}
+.status.err{background:var(--orange-100);border-color:var(--tnda-orange)}
+.done-mark{background:var(--tnda-orange);color:var(--tnda-white);padding:26px 20px}
+.done-mark div:last-child{font:700 26px/1.25 var(--font-body);margin-top:6px}
+.card-name{font:700 30px/1.15 var(--font-body);margin:2px 0 0}

@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FF4F2C">
+<title>TNDA 表單</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="app">
+  <header class="bar">
+    <div><div class="eyebrow" id="eyebrow"></div><h1 id="title">TNDA</h1></div>
+    <div class="who"><span id="back"></span><br><span id="who"></span></div>
+  </header>
+
+  <main class="body">
+    <section id="v-setup"></section>
+    <section id="v-main" class="hide"></section>
+    <section id="v-card" class="hide"></section>
+    <section id="v-done" class="hide">
+      <div class="done-mark"><div class="eyebrow">SUBMITTED</div><div>已送出，謝謝你</div></div>
+      <p style="font-size:13.5px;line-height:1.75;margin-top:16px">
+        <strong>這一張已經送出，不能再修改。</strong><span id="sent-at"></span><br>
+        真的填錯需要重填，請找現場工作人員。
+      </p>
+      <div id="done-status"></div>
+    </section>
+  </main>
+
+  <footer class="foot"><div class="inner" id="foot"></div></footer>
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+(() => {
+'use strict';
+const T = window.TNDA, A = window.APP;
+const $ = (id) => document.getElementById(id);
+const esc = A.esc;
+
+/* ── 哪一份表單 ────────────────────────────────────────── */
+const QS = new URLSearchParams(location.search);
+const formId = QS.get('f') || 'peer1';
+const F = T.FORMS[formId];
+/** 回上一頁的退路：從哪一天的行程表點進來就回哪一頁。 */
+const dayParam = QS.get('day') || '1';
+if (!F) {
+  document.body.innerHTML = '<div style="padding:40px;font:400 16px/1.6 sans-serif">' +
+    '找不到表單 <code>' + esc(formId) + '</code>。請從 <a href="index.html">學員入口</a> 或 ' +
+    '<a href="staff.html">業師入口</a> 進入。</div>';
+  return;
+}
+
+/* ── 狀態 ──────────────────────────────────────────────── */
+// S.me / S.cursor / S.per 的 key 全部是 id，姓名只在畫面上出現。
+const S = { me: null, head: {}, single: {}, per: {}, cursor: null, view: 'setup' };
+
+/** 這一張的 sid。跟後端去重、跟送出鎖用的是同一把鑰匙。 */
+const sidOf = () => !S.me ? '' :
+  [formId, S.me.id].concat(headKeyFields().map((f) => S.head[f.k] || '')).join('§');
+/** 已經送出過就不能再改——前端擋，後端也擋。 */
+const isSent = () => !!S.me && A.lock.is(sidOf());
+
+const headKeyFields = () => (F.head || []).filter((f) => f.key);
+const ctxSig = () => headKeyFields().map((f) => S.head[f.k] || '').join('§');
+const draftKey = () => A.draft.key(formId, S.me ? S.me.id : '', ctxSig());
+const saveDraft = () => S.me && A.draft.set(draftKey(), { head: S.head, single: S.single, per: S.per });
+/** 換一把鑰匙就換一份答案。找不到草稿要清空，否則上午那一張會
+ *  帶著下午填的分數跑進來。 */
+const loadDraft = () => {
+  const d = A.draft.get(draftKey()) || {};
+  S.single = d.single || {};
+  S.per = d.per || {};
+};
+
+const people = () => F.per ? A.scopeList(F.per.scope, S.me ? S.me.id : '', S.head) : [];
+const doneCount = () => {
+  const req = F.per.requires;
+  return people().filter((n) => S.per[n] && S.per[n][req] != null && S.per[n][req] !== '').length;
+};
+const headReady = () => (F.head || [])
+  .filter((f) => !f.showIf || Object.keys(f.showIf).every((k) => S.head[k] === f.showIf[k]))
+  .every((f) => !f.required || S.head[f.k]);
+
+/* ════ 欄位渲染 ═══════════════════════════════════════════
+   每個型別回傳一個 <div>，值寫回 store[f.k]，改動即存草稿。 */
+function fieldEl(f, store, onChange) {
+  const wrap = document.createElement('div');
+  const lab = document.createElement('span');
+  lab.className = 'label';
+  lab.innerHTML = esc(f.label) + (f.weight ? '<span class="w">' + f.weight + '%</span>' : '');
+  wrap.appendChild(lab);
+
+  // onChange 先跑：抬頭欄位改動會換一把草稿鑰匙並載入該草稿，
+  // 若先 saveDraft 就會用目前（尚未載入）的空資料把舊草稿蓋掉。
+  const bump = () => { if (onChange) onChange(); saveDraft(); };
+
+  if (f.type === 'scale') {
+    const box = document.createElement('div'); box.className = 'scale';
+    [1, 2, 3, 4, 5].forEach((v) => {
+      const b = document.createElement('button');
+      b.textContent = v;
+      b.setAttribute('aria-pressed', String(Number(store[f.k]) === v));
+      b.onclick = () => { store[f.k] = store[f.k] === v ? null : v; render(); bump(); };
+      box.appendChild(b);
+    });
+    wrap.appendChild(box);
+    if (f.evidence) {
+      const ev = document.createElement('input');
+      ev.className = 'field'; ev.style.marginTop = '8px';
+      ev.placeholder = '我看到什麼證據…';
+      ev.value = store[f.k + '_ev'] || '';
+      ev.oninput = () => { store[f.k + '_ev'] = ev.value; saveDraft(); };
+      wrap.appendChild(ev);
+    }
+  }
+
+  else if (f.type === 'choice') {
+    const box = document.createElement('div'); box.className = 'choice';
+    f.options.forEach((o) => {
+      const b = document.createElement('button');
+      b.dataset.v = o.v;
+      b.innerHTML = esc(o.label) + (o.hint ? '<small>' + esc(o.hint) + '</small>' : '');
+      b.setAttribute('aria-pressed', String(store[f.k] === o.v));
+      b.onclick = () => { store[f.k] = o.v; render(); bump(); };
+      box.appendChild(b);
+    });
+    wrap.appendChild(box);
+  }
+
+  else if (f.type === 'chips') {
+    const cur = store[f.k] || (store[f.k] = []);
+    const atMax = f.max && cur.length >= f.max;
+    const box = document.createElement('div'); box.className = 'chips';
+    f.options.forEach((o) => {
+      const on = cur.includes(o.v);
+      const b = document.createElement('button');
+      b.innerHTML = '<b>' + esc(o.v) + '</b>' + esc(o.label);
+      b.setAttribute('aria-pressed', String(on));
+      b.disabled = !on && atMax;
+      b.onclick = () => {
+        if (on) store[f.k] = cur.filter((v) => v !== o.v);
+        else if (!atMax) cur.push(o.v);
+        render(); bump();
+      };
+      box.appendChild(b);
+    });
+    wrap.appendChild(box);
+    if (f.max) {
+      const h = document.createElement('div'); h.className = 'hint';
+      h.textContent = atMax ? '已達上限 ' + f.max + ' 個，要換請先取消一個。'
+                            : '已選 ' + cur.length + ' / ' + f.max + '。';
+      wrap.appendChild(h);
+    }
+  }
+
+  else if (f.type === 'text' || f.type === 'memo') {
+    const el = document.createElement(f.type === 'memo' ? 'textarea' : 'input');
+    el.className = 'field';
+    if (f.max) el.maxLength = f.max;
+    if (f.placeholder) el.placeholder = f.placeholder;
+    el.value = store[f.k] || '';
+    el.oninput = () => { store[f.k] = el.value; saveDraft(); };
+    wrap.appendChild(el);
+  }
+
+  else if (f.type === 'pick') {
+    const opts = (f.options || A.optionList(f.optionsFrom, S.me ? S.me.id : ''))
+      .map((o) => (typeof o === 'string' ? { v: o, label: o } : o));
+    const box = document.createElement('div');
+    box.className = 'pick' + (opts.length > 4 ? ' cols' : '');
+    opts.forEach((o) => {
+      const b = document.createElement('button');
+      b.textContent = o.label;
+      b.setAttribute('aria-pressed', String(store[f.k] === o.v));
+      b.onclick = () => { store[f.k] = o.v; render(); bump(); };
+      box.appendChild(b);
+    });
+    wrap.appendChild(box);
+  }
+
+  if (f.hint) {
+    const h = document.createElement('div'); h.className = 'hint';
+    h.textContent = f.hint; wrap.appendChild(h);
+  }
+  return wrap;
+}
+
+/** showIf: { 另一個欄位的 k: 要等於的值 }。用在業師回饋單——
+ *  選了上午題才出現角色／招式卡，下午題才出現場景／互動卡。 */
+function visible(f, store) {
+  if (!f.showIf) return true;
+  return Object.keys(f.showIf).every((k) => (store[k] || S.head[k]) === f.showIf[k]);
+}
+
+function fieldsInto(host, fields, store, onChange) {
+  fields.filter((f) => visible(f, store))
+    .forEach((f) => host.appendChild(fieldEl(f, store, onChange)));
+}
+
+/** 只填一次那一段裡，required 的欄位有沒有填。逐人區塊另有 requires 把關。 */
+function selfReady() {
+  const need = [].concat(
+    F.self ? F.self.fields : [], F.foot ? F.foot.fields : []
+  ).filter((f) => f.required && visible(f, S.single));
+  return need.every((f) => S.single[f.k] != null && S.single[f.k] !== '');
+}
+
+/* ════ 畫面 ═══════════════════════════════════════════════ */
+
+/* ① 準備：我是誰 + 抬頭欄位 */
+function renderSetup() {
+  const v = $('v-setup'); v.innerHTML = '';
+
+  if (F.brief) {
+    const n = document.createElement('div'); n.className = 'note'; n.innerHTML = F.brief;
+    v.appendChild(n);
+  }
+
+  const meLabel = F.role === 'mentor' ? '你是哪位業師' : '你是誰（對照名牌上的編號）';
+  const pool = F.role === 'mentor' ? T.allMentorIds() : T.allStudentIds();
+  const lab = document.createElement('span');
+  lab.className = 'label'; lab.textContent = 'STEP 1 — ' + meLabel;
+  v.appendChild(lab);
+
+  const box = document.createElement('div');
+  box.className = 'pick cols';
+  pool.forEach((id) => {
+    const b = document.createElement('button');
+    // 編號一律顯示——同名同姓時是唯一的分辨依據，平常也讓人更快找到自己。
+    b.innerHTML = '<span style="font-family:var(--font-display);font-weight:900;' +
+      'color:var(--ink-300);margin-right:8px">' + esc(id) + '</span>' + esc(T.nameOf(id));
+    b.setAttribute('aria-pressed', String(S.me && S.me.id === id));
+    b.onclick = () => {
+      S.me = { id, role: F.role };
+      A.draft.identity(S.me);
+      loadDraft(); render();
+    };
+    box.appendChild(b);
+  });
+  v.appendChild(box);
+
+  if (S.me && F.head) {
+    const l2 = document.createElement('span');
+    l2.className = 'label'; l2.textContent = 'STEP 2 — 這一張是';
+    v.appendChild(l2);
+    fieldsInto(v, F.head, S.head, () => { loadDraft(); render(); });
+  }
+}
+
+/* ② 主畫面：self 區塊 + 逐人清單 + foot 區塊 */
+function renderMain() {
+  const v = $('v-main'); v.innerHTML = '';
+
+  if (F.head && F.head.length) {
+    const s = document.createElement('div');
+    s.className = 'hint'; s.style.marginBottom = '14px';
+    s.textContent = F.head.map((f) => f.label + '：' + headText(f)).join('　·　');
+    v.appendChild(s);
+  }
+
+  if (F.self) {
+    // 只在同一張表單裡還有別的區塊時才加框，否則整頁就是這個區塊。
+    const boxed = !!(F.per || F.foot);
+    const host = document.createElement('div');
+    if (boxed) host.className = 'sect';
+    if (F.self.label) {
+      const l = document.createElement('span'); l.className = 'label'; l.textContent = F.self.label;
+      host.appendChild(l);
+    }
+    fieldsInto(host, F.self.fields, S.single);
+    v.appendChild(host);
+  }
+
+  if (F.per) {
+    const list = people();
+    const total = list.length, done = doneCount();
+
+    const p = document.createElement('div'); p.className = 'progress';
+    p.innerHTML = '<span class="n">' + done + ' / ' + total + '</span>' +
+      '<span class="track"><span class="fill" style="width:' +
+      (total ? Math.round(done / total * 100) : 0) + '%"></span></span>';
+    if (F.per.label) {
+      const l = document.createElement('span'); l.className = 'label'; l.textContent = F.per.label;
+      v.appendChild(l);
+    }
+    v.appendChild(p);
+
+    const hint = document.createElement('p');
+    hint.className = 'hint'; hint.style.margin = '0 0 14px';
+    hint.textContent = formId === 'peer1'
+      ? '每位同學發表完就填他那一列，不用等到最後。隨時可以改。'
+      : '點名字進去填，可以隨時回頭改。';
+    v.appendChild(hint);
+
+    list.forEach((id) => {
+      const st = S.per[id] || {};
+      const b = document.createElement('button');
+      b.className = 'row';
+      // 左欄放學員編號，不是流水號——這樣紙本、名牌、螢幕上的號碼是同一個。
+      b.innerHTML =
+        '<span class="no">' + esc(id) + '</span>' +
+        '<span><span class="nm">' + esc(T.nameOf(id)) + '</span>' +
+        '<span class="sub">' + esc(summarise(st)) + '</span></span>' +
+        '<span class="tag ' + (isDone(st) ? 'on' : '') + '">' + esc(statusOf(st)) + '</span>';
+      b.onclick = () => { S.cursor = id; go('card'); };
+      v.appendChild(b);
+    });
+  }
+
+  if (F.foot) {
+    const sect = document.createElement('div');
+    sect.className = 'sect accent';
+    fieldsInto(sect, F.foot.fields, S.single);
+    v.appendChild(sect);
+  }
+
+  const st = document.createElement('div'); st.id = 'submit-status';
+  v.appendChild(st);
+}
+
+function isDone(st) {
+  const req = F.per.requires;
+  return st && st[req] != null && st[req] !== '';
+}
+function statusOf(st) {
+  if (!isDone(st)) return '－';
+  const req = F.per.requires;
+  const f = F.per.fields.find((x) => x.k === req);
+  if (f && f.type === 'choice') {
+    const o = f.options.find((x) => x.v === st[req]);
+    return o ? o.label : String(st[req]);
+  }
+  return '已填';
+}
+function summarise(st) {
+  if (!st || !Object.keys(st).length) return '尚未填寫';
+  const bits = [];
+  F.per.fields.forEach((f) => {
+    const v = st[f.k];
+    if (v == null || v === '' || (Array.isArray(v) && !v.length)) return;
+    if (f.type === 'scale') bits.push(f.label + ' ' + v);
+    else if (f.type === 'chips') bits.push(v.join('·'));
+    else if (f.type === 'text' || f.type === 'memo') bits.push(String(v).slice(0, 18));
+  });
+  return bits.join('　') || '尚未填寫';
+}
+
+/* ③ 單人卡片 */
+function renderCard() {
+  const v = $('v-card'); v.innerHTML = '';
+  const id = S.cursor;
+  const store = S.per[id] || (S.per[id] = {});
+
+  const no = document.createElement('div');
+  no.className = 'eyebrow'; no.style.color = 'var(--ink-300)';
+  no.textContent = 'NO. ' + id;
+  v.appendChild(no);
+  const h = document.createElement('h2'); h.className = 'card-name'; h.textContent = T.nameOf(id);
+  v.appendChild(h);
+
+  fieldsInto(v, F.per.fields, store);
+}
+
+function nextUnfilled() {
+  const list = people(), i = list.indexOf(S.cursor);
+  for (let k = 1; k <= list.length; k++) {
+    const n = list[(i + k) % list.length];
+    if (!isDone(S.per[n])) return n;
+  }
+  return null;
+}
+
+/* ④ 底部按鈕 */
+function renderFoot() {
+  const f = $('foot'); f.innerHTML = ''; f.className = 'inner';
+  const add = (label, cls, fn, disabled) => {
+    const b = document.createElement('button');
+    b.className = 'btn ' + (cls || ''); b.textContent = label;
+    b.disabled = !!disabled; b.onclick = fn; f.appendChild(b);
+  };
+
+  if (S.view === 'setup') {
+    const sent = isSent();
+    add(sent ? '這一張已經送出了' : '開始填寫', 'primary',
+      () => go(sent ? 'done' : 'main'), !(S.me && headReady()));
+  } else if (S.view === 'main') {
+    add('返回', 'ghost', () => go('setup'));
+    let label = '送出', ready = selfReady();
+    if (F.per) {
+      const done = doneCount(), total = people().length;
+      ready = ready && done > 0;
+      label = done < total ? '直接送出（' + done + '/' + total + '）' : '送出';
+    }
+    add(label, 'primary', doSubmit, !ready);
+    f.className = 'inner two';
+  } else if (S.view === 'card') {
+    add('回清單', 'ghost', () => go('main'));
+    const nxt = nextUnfilled();
+    add(nxt ? '儲存並下一位' : '儲存並回清單', 'primary',
+      () => { saveDraft(); if (nxt) { S.cursor = nxt; go('card'); } else go('main'); },
+      !isDone(S.per[S.cursor]));
+    f.className = 'inner two';
+  } else if (S.view === 'done') {
+    add('回當日行程', 'primary', () => {
+      location.href = (F.role === 'mentor' ? 'run.html?day=' : 'today.html?day=') +
+        encodeURIComponent(F.day || dayParam);
+    });
+  }
+}
+
+/* ⑤ 切換 */
+function go(v) {
+  // 已經送出的那一張就不再讓人進去改——只能看「已送出」那一頁。
+  if ((v === 'main' || v === 'card') && isSent()) v = 'done';
+  S.view = v; render(); if (v !== 'card') window.scrollTo(0, 0);
+}
+
+/** head 欄位在畫面上的樣子：人要顯示姓名，其他直接顯示值。 */
+function headText(f) {
+  const v = S.head[f.k];
+  if (!v) return '—';
+  return f.optionsFrom === 'all-students' || f.optionsFrom === 'mentors' ? T.labelOf(v) : v;
+}
+
+function render() {
+  $('eyebrow').textContent = F.eyebrow + (F.weightLabel ? '　' + F.weightLabel : '');
+  $('title').textContent = F.title;
+  $('who').innerHTML = S.me
+    ? esc(T.nameOf(S.me.id)) +
+      (F.head && F.head[0] && S.head[F.head[0].k] ? '<br>' + esc(headText(F.head[0])) : '')
+    : '';
+
+  ['setup', 'main', 'card', 'done'].forEach((k) => $('v-' + k).classList.toggle('hide', k !== S.view));
+  if (S.view === 'setup') renderSetup();
+  if (S.view === 'main')  renderMain();
+  if (S.view === 'card')  renderCard();
+  if (S.view === 'done') {
+    const at = A.lock.at(sidOf());
+    $('sent-at').textContent = at ? '（' + at.slice(0, 16).replace('T', ' ') + '）' : '';
+  }
+  renderFoot();
+}
+
+/* ════ 送出 ═══════════════════════════════════════════════ */
+function buildRows() {
+  const stamp = new Date().toISOString();
+  // sid 用 id 組，不用姓名——同名同姓的兩個人才不會互相覆蓋。
+  const sid = sidOf();
+  const flat = (o) => {
+    const out = {};
+    Object.keys(o || {}).forEach((k) => {
+      const v = o[k];
+      out[k] = Array.isArray(v) ? v.join('|') : (v == null ? '' : v);
+    });
+    return out;
+  };
+  // 切換題目後，另一組卡片欄位會被隱藏——那些值不能跟著送出去，
+  // 否則試算表上會同時出現上午與下午的卡。
+  const head = {};
+  (F.head || []).forEach((f) => { if (visible(f, S.head)) head[f.k] = S.head[f.k]; });
+
+  const base = Object.assign({ timestamp: stamp, sid, form: formId,
+    submitter: S.me.id, submitter_name: T.nameOf(S.me.id), role: F.role }, flat(head));
+  // subject 是人就補姓名欄；是組別代號（team2）就原樣帶過去。
+  const withSubject = (r, subject, rel) => Object.assign(r, {
+    subject, rel, subject_name: T.isKnown(subject) ? T.nameOf(subject) : subject,
+  });
+
+  const rows = [];
+  // self / foot：有逐人區塊時另立一列（rel=self），否則就是這張表唯一的一列。
+  if (F.self || F.foot) {
+    rows.push(withSubject(Object.assign({}, base, flat(S.single)),
+      F.per ? S.me.id : (S.head[F.subjectFrom] || S.me.id),
+      F.per ? 'self' : ''));
+  }
+  if (F.per) {
+    people().forEach((id) => {
+      if (!isDone(S.per[id])) return;
+      rows.push(withSubject(Object.assign({}, base, flat(S.per[id])), id, F.self ? 'peer' : ''));
+    });
+  }
+  return rows;
+}
+
+async function doSubmit() {
+  const cols = A.columnsOf(F);
+  const rows = buildRows();
+  const box = S.view === 'done' ? $('done-status') : $('submit-status');
+  const say = (cls, html) => { box.innerHTML = '<div class="status ' + cls + '">' + html + '</div>'; };
+
+  // 送出後不能改，所以一定要先問一次。
+  let warn = '';
+  if (F.per) {
+    const left = people().length - doneCount();
+    if (left > 0) warn = '還有 ' + left + ' 位沒填，送出後就補不了了。\n\n';
+  }
+  if (!window.confirm(warn + '確定要送出「' + F.title + '」嗎？\n\n' +
+      '送出後就不能再修改了。')) return;
+
+  say('', '送出中…');
+  try {
+    const r = await A.submit(formId, cols, rows);
+    A.lock.set(sidOf());
+    go('done');
+    $('done-status').innerHTML = '<div class="status ok">已收到 ' + (r.saved || rows.length) + ' 筆。</div>';
+  } catch (err) {
+    if (String(err.message) === 'ALREADY') {
+      // 後端說這一張已經有資料了——換裝置重填會走到這裡。
+      A.lock.set(sidOf());
+      go('done');
+      $('done-status').innerHTML =
+        '<div class="status err">這一張先前已經送出過了，系統沒有覆蓋舊資料。' +
+        '如果你認為這是錯的，請找現場工作人員。</div>';
+      return;
+    }
+    const offline = String(err.message) === 'OFFLINE';
+    if (offline) A.lock.set(sidOf());     // 離線也只讓填一次，交出去的檔案才不會有兩份
+    go(offline ? 'done' : S.view);
+    // go() 重建了整個畫面，box 已經是被丟掉的節點——重新抓一次。
+    const b2 = $(offline ? 'done-status' : 'submit-status');
+    b2.innerHTML = '<div class="status ' + (offline ? '' : 'err') + '">' + (offline
+      ? '離線模式：資料只存在這台裝置。請按下面按鈕匯出檔案交給工作人員。'
+      : '送出失敗（' + esc(String(err.message)) + '）。<br>你的填答已存在這台裝置，不會不見。' +
+        '確認網路後再按一次送出，或用下面按鈕匯出檔案。') + '</div>';
+    offerDownload(b2, cols, rows);
+  }
+}
+
+function offerDownload(box, cols, rows) {
+  const b = document.createElement('button');
+  b.className = 'btn ghost'; b.style.marginTop = '10px'; b.textContent = '匯出檔案（CSV）';
+  b.onclick = () => A.download(
+    formId + '_' + S.me.id + (ctxSig() ? '_' + ctxSig().replace(/§/g, '-') : '') + '.csv',
+    A.toCSV(cols, rows.map((r) => cols.map((c) => r[c]))));
+  box.appendChild(b);
+}
+
+/* ════ 啟動 ═══════════════════════════════════════════════ */
+A.guard(document.querySelector('.app'));
+A.mountBack($('back'),
+  (F.role === 'mentor' ? 'run.html?day=' : 'today.html?day=') + encodeURIComponent(F.day || dayParam));
+A.syncNames().then((changed) => { if (changed) render(); });
+
+const me = A.draft.identity();
+if (me && me.role === F.role && me.id) {
+  const pool = F.role === 'mentor' ? T.allMentorIds() : T.allStudentIds();
+  if (pool.includes(me.id)) { S.me = me; loadDraft(); }
+}
+render();
+})();
+</script>
+</body>
+</html>

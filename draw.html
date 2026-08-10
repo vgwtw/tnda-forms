@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="robots" content="noindex,nofollow">
+<title>擂台賽上場順序 · TNDA 前導甄選</title>
+<link rel="stylesheet" href="app.css">
+<style>
+.app{max-width:1100px;background:#fff}
+.body{background:#fff;padding:24px 20px 40px}
+
+.lead{border:2px solid var(--tnda-black);padding:16px 18px;font-size:13.5px;line-height:1.75}
+.lead b{color:var(--tnda-orange)}
+
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:18px 0}
+.actions .btn{width:auto;padding:14px 22px}
+.stamp{font-size:12px;color:var(--ink-300)}
+
+/* 投影用：一格一位，數字大、姓名大，遠遠看得到 */
+.order{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin-top:6px}
+.slot{border:2px solid var(--tnda-black);padding:12px 14px;display:flex;align-items:baseline;gap:12px}
+.slot .n{font:900 26px/1 var(--font-display);color:var(--tnda-orange);min-width:44px}
+.slot .who{font:700 19px/1.25 var(--font-body)}
+.slot .who small{display:block;font:400 11px/1.3 var(--font-display);color:var(--ink-300);margin-top:3px}
+.slot.first{background:var(--tnda-black);color:#fff}
+.slot.first .n{color:var(--tnda-orange)}
+.slot.first .who small{color:var(--white-a70)}
+
+.empty{border:2px dashed var(--ink-200);padding:60px 20px;text-align:center;color:var(--ink-300);
+       font-size:14px;line-height:1.8}
+
+@media print{
+  .actions,.lead,header.bar{display:none}
+  .app{max-width:none;box-shadow:none}
+  .order{grid-template-columns:repeat(3,1fr)}
+  .slot.first{background:#fff;color:#000}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="bar dark">
+    <div><div class="eyebrow" style="color:var(--tnda-orange)">DAY 1 · 16:00　擂台賽</div>
+      <h1>上場順序抽籤</h1></div>
+    <div class="who" id="back"></div>
+  </header>
+
+  <main class="body">
+    <div class="lead">
+      按一下抽出全場順序，投影出來即可。<b>守擂制：第 01 位先上，贏的留在台上，輸的換下一位。</b><br>
+      抽出來的順序會存在這台裝置，重新整理不會跑掉；要重抽會再問一次。
+      這一場<b>不計分</b>，純粹玩。
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" id="draw">抽出上場順序</button>
+      <button class="btn ghost hide" id="redraw">重抽</button>
+      <button class="btn ghost hide" id="print">列印</button>
+      <span class="stamp" id="stamp"></span>
+    </div>
+
+    <div id="out"></div>
+  </main>
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+(() => {
+'use strict';
+const T = window.TNDA, A = window.APP;
+const $ = (id) => document.getElementById(id), esc = A.esc;
+const KEY = 'tnda:brawl-order';
+
+/** Fisher–Yates，亂數用 crypto，不是 Math.random——
+ *  這是當眾抽的籤，洗牌要真的均勻，也不能讓人算得出來。 */
+function shuffle(list) {
+  const a = list.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const r = new Uint32Array(1);
+    crypto.getRandomValues(r);
+    const j = r[0] % (i + 1);
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+const load = () => { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } };
+const save = (v) => { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch (e) { /* ignore */ } };
+
+function render() {
+  const saved = load();
+  const has = saved && saved.order && saved.order.length;
+  $('draw').classList.toggle('hide', !!has);
+  $('redraw').classList.toggle('hide', !has);
+  $('print').classList.toggle('hide', !has);
+
+  if (!has) {
+    $('stamp').textContent = '';
+    $('out').innerHTML = '<div class="empty">還沒抽。<br>按上面的按鈕，' +
+      T.allStudentIds().length + ' 位學員會被隨機排成上場順序。</div>';
+    return;
+  }
+
+  $('stamp').textContent = '抽於 ' + esc(saved.at);
+  // 名單改過的話，抽籤結果裡可能有已不存在的編號——照實顯示編號，不要靜靜吞掉。
+  $('out').innerHTML = '<div class="order">' + saved.order.map((id, i) =>
+    '<div class="slot' + (i === 0 ? ' first' : '') + '">' +
+      '<span class="n">' + String(i + 1).padStart(2, '0') + '</span>' +
+      '<span class="who">' + esc(T.isKnown(id) ? T.nameOf(id) : id) +
+        '<small>NO. ' + esc(id) + (i === 0 ? '　先上台' : '') + '</small></span>' +
+    '</div>').join('') + '</div>';
+}
+
+function doDraw() {
+  const now = new Date();
+  const two = (n) => String(n).padStart(2, '0');
+  save({
+    order: shuffle(T.allStudentIds()),
+    at: now.getFullYear() + '-' + two(now.getMonth() + 1) + '-' + two(now.getDate()) +
+        ' ' + two(now.getHours()) + ':' + two(now.getMinutes()),
+  });
+  render();
+}
+
+$('draw').onclick = doDraw;
+$('redraw').onclick = () => {
+  // 當眾抽過的籤重抽是會被質疑的事，所以一定要再問一次。
+  if (confirm('重抽會蓋掉目前的順序，確定嗎？')) doDraw();
+};
+$('print').onclick = () => window.print();
+
+A.guard(document.querySelector('.app'));
+A.mountBack($('back'), 'run.html?day=1');
+A.syncNames().then((changed) => { if (changed) render(); });
+render();
+})();
+</script>
+</body>
+</html>

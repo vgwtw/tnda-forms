@@ -1,0 +1,14 @@
+/* 入口頁（index.html 學員 / staff.html 業師）共用的清單樣式 */
+.entry{display:block;border:2px solid var(--tnda-black);padding:16px;margin-top:10px;
+       background:var(--tnda-white);color:var(--tnda-black)}
+.entry:hover{background:var(--tnda-black);color:var(--tnda-white)}
+.entry:hover .sub{color:var(--white-a70)}
+.entry .top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.entry .nm{font:700 17px/1.25 var(--font-body)}
+.entry .wt{font:900 13px/1 var(--font-display);color:var(--tnda-orange);white-space:nowrap}
+.entry .sub{font-size:12.5px;color:var(--ink-500);margin-top:5px;line-height:1.5}
+.entry:hover .wt{color:var(--tnda-orange)}
+
+.day{display:flex;align-items:center;gap:10px;margin:28px 0 6px}
+.day span:first-child{font:900 30px/1 var(--font-display);color:var(--tnda-orange)}
+.day span:last-child{font:700 13px/1.2 var(--font-body)}
