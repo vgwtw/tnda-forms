@@ -67,12 +67,24 @@ const STUDENTS = [
   { id: '30', d1: 'B 組', d2: 'T06' },
 ];
 
-/* 業師同樣用 id。 */
+/* 業師同樣用 id，姓名也存在試算表。
+   `days` 是他哪幾天出席——兩天的業師不同人，表單頁只會列出當天的那幾位，
+   業師才不會在一長串裡面找自己，也不會誤選成別天的人。
+
+   同一個人兩天都來 → **只給他一個 id**，寫 days: [1, 2]。
+   不要為了兩天開兩個 id：那樣他在名單裡會出現兩次，改名也要改兩次。 */
 const MENTORS = [
-  { id: 'M1' },
-  { id: 'M2' },
-  { id: 'M3' },
-  { id: 'M4' },
+  // Day 1：五位
+  { id: 'M1', days: [1] },
+  { id: 'M2', days: [1] },
+  { id: 'M3', days: [1] },
+  { id: 'M4', days: [1] },
+  { id: 'M5', days: [1] },
+  // Day 2：目前抓四位，人數不同就自己加減行
+  { id: 'M6', days: [2] },
+  { id: 'M7', days: [2] },
+  { id: 'M8', days: [2] },
+  { id: 'M9', days: [2] },
 ];
 
 
@@ -561,6 +573,14 @@ return {
   d1Groups, d2Teams, studentsIn, teamMembers,
   allStudentIds: () => STUDENTS.map((s) => s.id),
   allMentorIds: () => MENTORS.map((m) => m.id),
+  /** 某一天出席的業師。沒寫 days 的視為兩天都來，舊設定才不會突然變空。 */
+  mentorIdsForDay: (day) => MENTORS
+    .filter((m) => !m.days || m.days.map(String).includes(String(day)))
+    .map((m) => m.id),
+  daysOfMentor: (id) => {
+    const m = MENTORS.find((x) => x.id === id);
+    return m && m.days ? m.days.slice() : [1, 2];
+  },
   d1GroupOf: (id) => (PEOPLE[id] ? PEOPLE[id].d1 : ''),
   d2TeamOf:  (id) => (PEOPLE[id] ? PEOPLE[id].d2 : ''),
   event: 'TNDA 前導甄選',

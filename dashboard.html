@@ -6,122 +6,229 @@
 <title>統計儀表板 · TNDA 前導甄選</title>
 <link rel="stylesheet" href="app.css">
 <style>
-body{background:var(--ink-050)}
-.wrap{max-width:1240px;margin:0 auto;padding:0 24px 90px}
-header.top{background:var(--tnda-orange);color:var(--tnda-white);padding:26px 0}
-header.top .wrap{padding-bottom:0;display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
-header.top h1{margin:4px 0 0;font:700 28px/1.2 var(--font-body)}
-header.top .meta{font-size:13px;text-align:right;line-height:1.5}
+/* ── 儀表板專用外觀 ──────────────────────────────────────
+   長時間盯著看的頁面，所以跟表單頁不同：深色底、髮絲線、
+   橘色只留給圖表的主要數列，其餘一律灰階。切換淺色存在這台裝置。 */
+:root{
+  --bg:#131313; --rail:#0D0D0D; --s1:#1A1A1A; --s2:#232323;
+  --line:#292929; --line2:#1F1F1F;
+  --fg:#EAEAEA; --fg2:#9E9E9E; --fg3:#6B6B6B;
+  --acc:var(--tnda-orange);
+}
+html[data-theme="light"]{
+  --bg:#F4F4F4; --rail:#FFFFFF; --s1:#FFFFFF; --s2:#EDEDED;
+  --line:#E0E0E0; --line2:#EDEDED;
+  --fg:#141414; --fg2:#5A5A5A; --fg3:#8E8E8E;
+}
+body{background:var(--bg);color:var(--fg);font-size:15px}
+a{color:var(--fg)}
+a:hover{color:var(--acc)}
+.shell{display:grid;grid-template-columns:216px 1fr;min-height:100dvh}
 
-nav.tabs{background:var(--tnda-black);position:sticky;top:0;z-index:10}
-nav.tabs .wrap{padding:0;display:flex;overflow-x:auto}
-nav.tabs button{color:#fff;opacity:.55;padding:14px 18px;white-space:nowrap;
-  font:700 13px/1 var(--font-body);border-bottom:3px solid transparent}
-nav.tabs button[aria-selected="true"]{opacity:1;color:var(--tnda-orange);border-bottom-color:var(--tnda-orange)}
+/* ── 左側導覽 ── */
+aside.rail{background:var(--rail);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;position:sticky;top:0;height:100dvh}
+aside.rail .brand{padding:22px 20px 18px;border-bottom:1px solid var(--line2)}
+aside.rail .brand .eyebrow{color:var(--fg3);letter-spacing:.2em;font-weight:400;font-size:9px}
+aside.rail .brand h1{margin:7px 0 0;font:700 17px/1.3 var(--font-body)}
+aside.rail .railfoot{padding:14px 20px 18px;border-top:1px solid var(--line2);
+  font-size:11.5px;line-height:1.6;color:var(--fg3);display:grid;gap:10px;justify-items:start}
+aside.rail .railfoot a{color:var(--fg2);border-bottom:1px solid var(--line)}
+#theme{padding:6px 11px;border:1px solid var(--line);background:none;color:var(--fg2);font-size:11px}
+#theme:hover{color:var(--fg);border-color:var(--fg3)}
 
-section.pane{padding-top:30px}
-h2.sec{font:700 10px/1.2 var(--font-display);letter-spacing:.14em;color:var(--tnda-orange);
-  text-transform:uppercase;margin:34px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--tnda-black)}
+nav.tabs{padding:12px 10px;display:flex;flex-direction:column;gap:1px;flex:1;overflow-y:auto}
+nav.tabs button{display:grid;grid-template-columns:3px 1fr;gap:10px;align-items:center;
+  text-align:left;padding:9px 10px;color:var(--fg2);font:400 13.5px/1.35 var(--font-body)}
+nav.tabs button::before{content:"";height:14px;background:transparent}
+nav.tabs button:hover{color:var(--fg)}
+nav.tabs button[aria-selected="true"]{background:var(--s2);color:var(--fg);font-weight:500}
+nav.tabs button[aria-selected="true"]::before{background:var(--acc)}
+
+main.main{min-width:0;padding:0 0 96px}
+.wrap{max-width:1240px;padding:0 40px}
+section.pane{padding-top:34px}
+
+/* ── 標題與說明 ── */
+h2.sec{font:500 15px/1.3 var(--font-body);letter-spacing:0;color:var(--fg);
+  text-transform:none;margin:34px 0 0;padding-bottom:9px;border-bottom:1px solid var(--line)}
 h2.sec:first-child{margin-top:0}
-p.lede{font-size:14px;color:var(--ink-500);margin:0 0 16px;max-width:74ch;line-height:1.7}
-p.lede b{color:var(--tnda-black)}
+p.lede{font-size:12.5px;color:var(--fg2);margin:10px 0 16px;max-width:70ch;line-height:1.75}
+p.lede b{color:var(--fg);font-weight:500}
+.eyebrow{color:var(--fg3);letter-spacing:.2em;font-weight:400}
 
-.card{background:var(--tnda-white);border:2px solid var(--tnda-black);padding:18px}
+/* ── 區塊 ── */
+.card{background:var(--s1);border:1px solid var(--line);padding:18px 20px}
 .grid{display:grid;gap:14px}
-.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
-.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 .g4{grid-template-columns:repeat(auto-fit,minmax(175px,1fr))}
 
-.stat{background:var(--tnda-white);border:2px solid var(--tnda-black);padding:16px}
-.stat .k{font:700 10px/1.2 var(--font-display);letter-spacing:.12em;color:var(--ink-500);text-transform:uppercase}
-.stat .v{font:900 32px/1.05 var(--font-display);margin-top:8px}
-.stat .u{font-size:12px;color:var(--ink-500);margin-top:4px}
-.stat.on{background:var(--tnda-black);color:var(--tnda-white)}
-.stat.on .k,.stat.on .u{color:var(--white-a70)}
+/* KPI：不做盒子，一條分隔線帶過 */
+.kpis{gap:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:8px}
+.stat{background:none;border:0;border-right:1px solid var(--line2);padding:16px 22px 15px}
+.stat:last-child{border-right:0}
+.stat .k{font:400 11.5px/1.4 var(--font-body);letter-spacing:0;color:var(--fg2);text-transform:none}
+.stat .v{font:400 27px/1.1 var(--font-display);margin-top:6px;color:var(--fg)}
+.stat .u{font-size:11px;color:var(--fg3);margin-top:3px}
+.stat.on{background:none;color:var(--fg)}
+.stat.on .k{color:var(--fg2)}
+.stat.on .u{color:var(--fg3)}
 
-.bars{display:grid;gap:7px}
-.bar{display:grid;grid-template-columns:130px 1fr 96px;gap:10px;align-items:center;font-size:13px}
+/* ── 長條圖：唯一允許出現橘色的地方 ──
+   注意：app.css 的 .bar 是表單頁的橘底抬頭，同名，所以要先清掉。 */
+.bars{display:grid;gap:2px}
+.bar{display:grid;grid-template-columns:132px 1fr 96px;gap:14px;align-items:center;
+  font-size:12.5px;color:var(--fg2);padding:5px 0;background:none;position:static}
 .bar .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bar .t b{font-family:var(--font-display);font-weight:900;margin-right:6px;color:var(--tnda-orange)}
-.bar .track{display:block;height:16px;background:var(--ink-100);position:relative}
-.bar .fill{display:block;height:100%;min-width:2px;background:var(--tnda-black)}
-.bar .fill.acc{background:var(--tnda-orange)}
-.bar .fill.mut{background:var(--ink-300)}
-.bar .mark{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--tnda-black)}
-.bar .n{font:700 12px/1.3 var(--font-display);text-align:right;white-space:nowrap}
-.legend{font-size:12px;color:var(--ink-500);margin-top:12px;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
-.legend i{display:inline-block;width:22px;height:10px;background:var(--tnda-orange);margin-right:6px;vertical-align:-1px}
-.legend i.line{width:2px;height:14px;background:var(--tnda-black)}
+.bar .t b{font:400 10px/1 var(--font-display);margin-right:8px;color:var(--fg3)}
+.bar .track{display:block;height:9px;background:var(--s2);position:relative}
+.bar .fill{display:block;height:100%;min-width:2px;background:var(--fg3)}
+.bar .fill.acc{background:var(--acc)}
+.bar .fill.mut{background:var(--fg3)}
+.bar .mark{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--fg3)}
+.bar .n{font:400 11px/1.3 var(--font-display);text-align:right;white-space:nowrap;color:var(--fg2)}
+.legend{font-size:11.5px;color:var(--fg3);margin-top:12px;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+.legend i{display:inline-block;width:22px;height:8px;background:var(--acc);margin-right:6px;vertical-align:0}
+.legend i.line{width:1px;height:12px;background:var(--fg3)}
 
-table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--tnda-white)}
-th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--ink-100);vertical-align:top}
-th{font:700 10px/1.2 var(--font-display);letter-spacing:.1em;text-transform:uppercase;
-  border-bottom:2px solid var(--tnda-black);white-space:nowrap}
-td.num,th.num{text-align:right;font-family:var(--font-display);font-weight:700;white-space:nowrap}
-td.big{font:900 17px/1 var(--font-display);text-align:right}
-tr.flagged td{background:var(--orange-100)}
-.scroll{overflow-x:auto;background:var(--tnda-white);border:2px solid var(--tnda-black)}
-.scroll table{border:0}
+/* ── 表格：沒有外框，只有髮絲線 ── */
+table{width:100%;border-collapse:collapse;font-size:13px;background:none}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line2);vertical-align:middle}
+th{font:400 11px/1.3 var(--font-body);letter-spacing:0;text-transform:none;color:var(--fg3);
+  border-bottom:1px solid var(--line);white-space:nowrap;background:var(--bg);position:sticky;top:0}
+td.num{text-align:right;font-family:var(--font-display);font-weight:400;white-space:nowrap;color:var(--fg2)}
+th.num{text-align:right;white-space:nowrap}
+td:last-child{white-space:nowrap}
+td.big{font:400 15px/1 var(--font-display);text-align:right;color:var(--fg)}
+tr.flagged td{background:none}
+tr.flagged td:first-child{box-shadow:inset 2px 0 0 var(--fg)}
+tbody tr:hover td{background:var(--s1)}
+.scroll{overflow-x:auto;background:none;border:0;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.idtag{font:400 10px/1 var(--font-display);color:var(--fg3);margin-right:9px}
 
-.person{background:var(--tnda-white);border:2px solid var(--tnda-black);padding:18px;display:flex;flex-direction:column;gap:12px}
-.person.flag{border-color:var(--tnda-orange);border-width:4px}
-.person h3{margin:0;font:700 19px/1.25 var(--font-body)}
-.person .sub{font-size:11.5px;color:var(--ink-500)}
+/* ── 錄取總分：排名清單 ＋ 單人詳情 ── */
+.split{display:grid;grid-template-columns:minmax(330px,400px) 1fr;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:18px}
+.split .list{border-right:1px solid var(--line);position:sticky;top:0;align-self:start;
+  height:calc(100dvh - 40px);overflow-y:auto}
+.split .list button{width:100%;display:grid;grid-template-columns:26px 1fr 116px 44px;gap:12px;
+  align-items:center;text-align:left;padding:11px 22px 11px 16px;border-bottom:1px solid var(--line2)}
+.split .list button:hover{background:var(--s1)}
+.split .list button[aria-selected="true"]{background:var(--s2)}
+.split .list .no{font:400 10px/1 var(--font-display);color:var(--fg3)}
+.split .list .nm{font-size:14px;color:var(--fg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.split .list .nm em{font-style:normal;color:var(--fg3);font-size:11px;margin-left:8px}
+.split .list .mini{display:block;height:6px;background:var(--s2)}
+.split .list .mini i{display:block;height:100%;background:var(--fg3)}
+.split .list button[aria-selected="true"] .mini i{background:var(--acc)}
+.split .list .sc{font:400 14px/1 var(--font-display);text-align:right;color:var(--fg2)}
+.split .list button[aria-selected="true"] .sc{color:var(--fg)}
+.split .detail{padding:26px 40px 40px;min-width:0}
+.detail .head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap}
+.detail .head h3{margin:8px 0 0;font:700 24px/1.2 var(--font-body)}
+.detail .head .sub{font-size:12.5px;color:var(--fg2);margin-top:5px}
+.detail .head .tot{font:400 44px/1 var(--font-display);text-align:right}
+.detail .head .cap{font-size:11.5px;color:var(--fg2);margin-top:6px;text-align:right}
+.detail .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px;margin-top:28px}
+.detail .lbl{font-size:11.5px;color:var(--fg2);padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.detail .facts{display:flex;gap:26px;margin-top:18px;padding-top:14px;border-top:1px solid var(--line2)}
+.detail .facts .k{font-size:11.5px;color:var(--fg2)}
+.detail .facts .v{font:400 18px/1.2 var(--font-display);margin-top:4px}
+.dots{display:grid;grid-template-columns:112px 1fr 32px;gap:12px;align-items:center;font-size:12.5px;color:var(--fg2)}
+.dots .d{display:flex;gap:3px}
+.dots .d i{flex:1;height:8px;background:var(--s2)}
+.dots .d i.on{background:var(--acc)}
+.dots .n{font:400 12px/1 var(--font-display);text-align:right}
+.evi{display:grid;gap:1px;background:var(--line2);margin-top:14px}
+.evi div{background:var(--s1);padding:11px 14px;display:grid;grid-template-columns:96px 1fr;
+  gap:14px;font-size:13px;line-height:1.6}
+.evi div span{color:var(--fg3);font-size:11.5px}
+
+/* ── 個人回饋摘要 ── */
+.person{background:var(--s1);border:1px solid var(--line);border-left:3px solid var(--line);
+  padding:18px 20px;display:flex;flex-direction:column;gap:14px}
+.person.flag{border-color:var(--line);border-left:3px solid var(--fg)}
+.person h3{margin:0;font:500 17px/1.25 var(--font-body)}
+.person .sub{font-size:11.5px;color:var(--fg3);white-space:nowrap}
 .rate{display:flex;align-items:baseline;gap:8px}
-.rate .big{font:900 30px/1 var(--font-display)}
-.rate .cmp{font-size:12px;color:var(--ink-500)}
-.quotes{border-top:1px solid var(--ink-100);padding-top:10px;display:grid;gap:6px}
-.quotes div{font-size:13px;line-height:1.5;padding-left:12px;border-left:3px solid var(--tnda-orange)}
-.pill{display:inline-block;font:700 10px/1 var(--font-display);letter-spacing:.06em;
-  padding:5px 8px;border:2px solid var(--tnda-black);margin:0 5px 5px 0}
-.pill.warn{background:var(--tnda-orange);border-color:var(--tnda-orange);color:var(--tnda-white)}
-/* 互選對象：收在同一格裡的小標，一人一列才不會排出上百格 */
-.mate{display:inline-block;border:1px solid var(--tnda-black);padding:2px 7px;
-      margin:0 5px 4px 0;font-size:12px;white-space:nowrap}
-.mate.taken{border-color:var(--ink-200);background:var(--ink-050);color:var(--ink-300)}
+.rate .big{font:400 26px/1 var(--font-display)}
+.rate .cmp{font-size:11px;color:var(--fg3)}
+.quotes{border-top:1px solid var(--line2);padding-top:12px;display:grid;gap:7px}
+.quotes div{font-size:12.5px;line-height:1.55;color:var(--fg2);padding-left:0;border-left:0}
+
+/* ── 標籤 ── */
+.pill{display:inline-block;font:400 11px/1.3 var(--font-body);letter-spacing:0;
+  padding:4px 9px;border:1px solid var(--line);color:var(--fg2);margin:0 6px 6px 0}
+.pill.warn{background:none;border-color:var(--fg);color:var(--fg)}
+.mate{display:inline-block;border:1px solid var(--line);padding:2px 8px;
+      margin:0 6px 4px 0;font-size:11.5px;white-space:nowrap;color:var(--fg)}
+.mate.taken{border-color:var(--line2);background:none;color:var(--fg3)}
 
 .row-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
-.msg{font-size:13px;padding:11px 14px;border:2px solid var(--tnda-black);margin-top:12px;line-height:1.6}
-.msg.err{background:var(--orange-100);border-color:var(--tnda-orange)}
-.warnbox{background:var(--tnda-black);color:var(--tnda-white);padding:16px;font-size:13px;line-height:1.7}
-.warnbox b{color:var(--tnda-orange)}
-/* 黑底裡的 code 要跟著反白，不然 app.css 的淺底會把字吃掉 */
-.warnbox code{background:var(--white-a16);color:#fff}
+.msg{font-size:13px;padding:11px 14px;border:1px solid var(--line);background:var(--s1);margin-top:12px;line-height:1.6}
+.msg.err{background:var(--s1);border-color:var(--acc)}
+.warnbox{background:var(--s1);border:1px solid var(--line);color:var(--fg2);padding:16px 20px;font-size:13px;line-height:1.7}
+.warnbox b{color:var(--fg);font-weight:500}
+.warnbox code{background:var(--s2);color:var(--fg)}
 label.sw{display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
-.empty{padding:60px 20px;text-align:center;color:var(--ink-300);font-size:14px}
-@media print{nav.tabs,.row-actions,.btn{display:none}body{background:#fff}}
+.empty{padding:60px 20px;text-align:center;color:var(--fg3);font-size:14px}
+.stamp{font-size:12px;color:var(--fg2)}
+
+/* app.css 的按鈕與輸入框在深色底上要跟著換 */
+.btn{border:1px solid var(--line);background:var(--s1);color:var(--fg);font-weight:400}
+.btn.primary{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.btn.ghost{background:none;border-color:var(--line);color:var(--fg2)}
+.btn.inline{padding:10px 16px;font-size:13px}
+.field{border:1px solid var(--line);background:var(--s2);color:var(--fg)}
+.field:focus{outline:2px solid var(--acc);outline-offset:-2px}
+code{background:var(--s2);color:var(--fg2)}
+
+@media print{
+  aside.rail,.row-actions,.btn{display:none}
+  html[data-theme]{--bg:#fff;--s1:#fff;--s2:#EDEDED;--line:#DDD;--line2:#EEE;--fg:#000;--fg2:#555;--fg3:#888}
+  .shell{display:block}
+  .split .list{display:none}
+}
 </style>
 </head>
 <body>
 
-<header class="top">
-  <div class="wrap">
-    <div><div class="eyebrow">TNDA 前導甄選 — ANALYSIS</div><h1>統計儀表板</h1></div>
-    <div class="meta"><span id="back"></span><br><span id="meta">尚未載入資料</span></div>
+<div class="shell">
+<aside class="rail">
+  <div class="brand">
+    <div class="eyebrow">TNDA 前導甄選</div>
+    <h1>統計儀表板</h1>
   </div>
-</header>
+  <nav class="tabs" id="tabs"></nav>
+  <div class="railfoot">
+    <span id="back"></span>
+    <span id="meta">尚未載入資料</span>
+    <button id="theme">切換淺色</button>
+  </div>
+</aside>
 
-<nav class="tabs"><div class="wrap" id="tabs"></div></nav>
-
+<main class="main">
 <div class="wrap">
   <section class="pane" id="pane-load">
     <h2 class="sec">載入資料</h2>
     <p class="lede">三種來源擇一，每次載入會取代目前的資料。</p>
     <div class="grid g2">
       <div class="card">
-        <div class="eyebrow" style="color:var(--tnda-orange)">A — 從 Google 試算表直接抓</div>
+        <div class="eyebrow" style="color:var(--fg)">A — 從 Google 試算表直接抓</div>
         <p class="lede" style="margin:10px 0 12px">
           需先在 <code>config.js</code> 填好 ENDPOINT。一次抓回全部五份表單。
         </p>
         <label class="lede" style="display:block;margin-bottom:6px">讀取金鑰
-          <span style="color:var(--ink-300)">（apps-script.gs 裡的 READ_KEY，只存在這台裝置）</span>
+          <span style="color:var(--fg3)">（apps-script.gs 裡的 READ_KEY，只存在這台裝置）</span>
         </label>
         <input type="password" class="field" id="readkey" autocomplete="off"
                placeholder="只有主辦知道的那一串字" style="margin-bottom:12px">
         <button class="btn primary inline" id="btn-fetch">抓取最新資料</button>
       </div>
       <div class="card">
-        <div class="eyebrow" style="color:var(--tnda-orange)">B — 上傳 CSV</div>
+        <div class="eyebrow" style="color:var(--fg)">B — 上傳 CSV</div>
         <p class="lede" style="margin:10px 0 12px">
           試算表的每個分頁「檔案 → 下載 → CSV」，可一次選多個檔。
           檔名或 <code>form</code> 欄會決定它是哪一份表單。
@@ -144,6 +251,8 @@ label.sw{display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:po
   <section class="pane hide" id="pane-roster"></section>
   <section class="pane hide" id="pane-export"></section>
 </div>
+</main>
+</div>
 
 <script src="config.js"></script>
 <script src="app.js"></script>
@@ -157,9 +266,9 @@ let DATA = { peer1: [], pair1: [], mentor1: [], observe2: [], team2: [], self2: 
 let REVEAL = false;
 
 const TABS = [
-  ['load', '載入資料'], ['score', '錄取總分'], ['peer', 'D1 同儕訊號'],
-  ['day2', 'D2 過程與團隊'], ['brief', '個人回饋摘要'], ['status', '完成度'],
-  ['roster', '名單'], ['export', '匯出'],
+  ['score', '錄取總分'], ['peer', 'D1 同儕訊號'], ['day2', 'D2 過程與團隊'],
+  ['brief', '個人回饋摘要'], ['status', '完成度'], ['roster', '名單'],
+  ['export', '匯出'], ['load', '載入資料'],
 ];
 
 /* ════ 通用 ═══════════════════════════════════════════════ */
@@ -167,8 +276,7 @@ const TABS = [
  *  而且同名同姓時姓名排序會把兩個人排在一起，看起來像重複資料。 */
 const byId = (a, b) => String(a.id).localeCompare(String(b.id), undefined, { numeric: true });
 /** 表格與卡片上的人名前綴：編號用等寬字體壓灰，姓名維持主體。 */
-const idTag = (id) => '<span style="font:900 11px/1 var(--font-display);color:var(--ink-300);' +
-  'margin-right:7px">' + esc(id) + '</span>';
+const idTag = (id) => '<span class="idtag">' + esc(id) + '</span>';
 
 const n1 = (x) => x == null ? '—' : (Math.round(x * 10) / 10).toFixed(1);
 const n0 = (x) => x == null ? '—' : String(Math.round(x));
@@ -346,43 +454,129 @@ function barRow(label, frac, right, cls, rawLabel, mark) {
     '<span class="n">' + esc(right) + '</span></div>';
 }
 
-/* ── 錄取總分 ──────────────────────────────────────────── */
+/* ── 錄取總分 ──────────────────────────────────────────
+   30 個人 × 10 欄的大表在螢幕上很難讀，所以預設是
+   「左邊排名清單、右邊一個人的完整證據」，要做合議對照時
+   再按「看完整表格」切回原本那張表（排序也還在）。 */
+let SEL = null, FULL = false;
+
 function renderScore() {
   const p = $('pane-score');
   if (!hasAny()) return void (p.innerHTML = empty());
   const { people } = computeAll();
-  const list = Object.values(people);
+  const list = Object.values(people).sort(byId);
   const scored = list.filter((x) => x.total != null);
+  if (!SEL || !people[SEL]) SEL = list[0].id;
 
   let h = '<h2 class="sec">加權總分</h2>';
   h += '<p class="lede">' +
-    T.SCORING.map((s) => s.label + ' <b>' + Math.round(s.weight * 100) + '%</b>').join('　+　') +
-    '。同儕評價與自評互評佔 0%，只當訊號，不進總分。<br>' +
-    '<b>「已計入」不是 100% 就代表那個人還缺表單</b>——總分是用現有部分重新歸一算的，' +
-    '在缺件補齊前不要拿來比較。</p>';
+    T.SCORING.map((s) => s.label + ' <b>' + Math.round(s.weight * 100) + '%</b>').join('　·　') +
+    '。同儕評價與自評互評佔 0%，只當訊號，不進總分。' +
+    '<b>「已計入」不到 100% 代表那個人還缺表單</b>，缺件補齊前不要拿來比較。</p>';
 
-  h += '<div class="grid g4">' +
+  // 分布：40–100 每 5 分一格，只有它跟長條圖可以用橘色
+  const bins = new Array(12).fill(0);
+  scored.forEach((x) => { bins[Math.max(0, Math.min(11, Math.floor((x.total - 40) / 5)))]++; });
+  const bmax = Math.max(1, ...bins);
+  const hist = '<div class="stat" style="flex:1.6;display:flex;flex-direction:column">' +
+    '<div class="k">總分分布　40–100</div>' +
+    '<div style="display:flex;align-items:flex-end;gap:3px;height:38px;margin-top:10px">' +
+    bins.map((n, i) => '<span title="' + (40 + i * 5) + '–' + (45 + i * 5) + '：' + n + ' 位" ' +
+      'style="flex:1;min-height:2px;background:var(--acc);height:' +
+      Math.round((n / bmax) * 100) + '%"></span>').join('') +
+    '</div><div class="u" style="display:flex;justify-content:space-between;font-family:var(--font-display)">' +
+    '<span>40</span><span>70</span><span>100</span></div></div>';
+
+  h += '<div class="grid g4 kpis" style="display:flex;flex-wrap:wrap">' +
     stat('已有總分', scored.length, '共 ' + list.length + ' 位', true) +
     stat('完整計分', list.filter((x) => x.coverage >= 0.999).length, '三份都到齊') +
     stat('中位數', n1(A.median(scored.map((x) => x.total))), '0–100') +
-    stat('旗標', list.filter((x) => x.flags.length).length, '位有業師旗標') +
-    '</div>';
+    stat('需要對分', list.filter((x) => (x.spread || 0) >= 1.5).length, '業師差距 ≥ 1.5') +
+    hist + '</div>';
 
-  h += '<h2 class="sec">逐人明細</h2>' +
-    '<p class="lede">依姓名排序。要看排序請按欄位標題——排序只在這一頁，不代表名次。</p>';
-  h += '<div class="scroll"><table id="score-table"><thead><tr>' +
+  h += '<div class="row-actions" style="justify-content:space-between">' +
+    '<span class="stamp">依編號排序。點左邊任何一位看他的完整證據。</span>' +
+    '<button class="btn ghost inline" id="sc-mode">' +
+    (FULL ? '回到逐人檢視' : '看完整表格') + '</button></div>';
+
+  h += FULL ? scoreTableHTML(list) : splitHTML(list, people[SEL]);
+  p.innerHTML = h;
+
+  $('sc-mode').onclick = () => { FULL = !FULL; renderScore(); };
+  if (FULL) bindSort(list);
+  else {
+    p.querySelectorAll('.list button').forEach((b) => {
+      b.onclick = () => { SEL = b.dataset.id; renderScore(); };
+    });
+  }
+}
+
+function splitHTML(list, x) {
+  const rows = list.map((s) =>
+    '<button data-id="' + esc(s.id) + '" aria-selected="' + (s.id === SEL) + '">' +
+    '<span class="no">' + esc(s.id) + '</span>' +
+    '<span class="nm">' + esc(s.name) + '<em>' + esc(s.d1) +
+      (s.team ? ' · ' + esc(s.team) : '') + '</em></span>' +
+    '<span class="mini"><i style="width:' + Math.round(s.total || 0) + '%"></i></span>' +
+    '<span class="sc">' + n1(s.total) + '</span></button>').join('');
+
+  const pr = peerOf(x.id) || {}, gp = selfGap()[x.id] || {};
+  const pills = x.flags.map((f) => '<span class="pill' + (f === 'STAR' ? '' : ' warn') + '">' +
+      esc(FLAG_LABEL[f] || f) + '</span>').join('') +
+    ((x.spread || 0) >= 1.5 ? '<span class="pill warn">業師差距 ' + n1(x.spread) + '　需當場對分</span>' : '') +
+    (pr.received && pr.gShare >= 0.3 ? '<span class="pill warn">同儕曝光不足　G ' + pr.g + '</span>' : '') +
+    (Math.abs(gp.gap || 0) >= 1 ? '<span class="pill warn">自評落差 ' +
+      (gp.gap > 0 ? '+' : '') + n1(gp.gap) + '</span>' : '');
+
+  const parts = '<div class="bars">' + T.SCORING.map((s) =>
+    barRow(s.label + '　' + Math.round(s.weight * 100) + '%',
+      (x.parts[s.form] || 0) / 100, n1(x.parts[s.form]), 'acc')).join('') + '</div>';
+
+  const dims = (x.detail.mentor1 || []).map((d) =>
+    '<div class="dots"><span class="t" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+    esc(d.f.label) + '</span><span class="d">' +
+    [1, 2, 3, 4, 5].map((i) => '<i class="' + (i <= Math.round(d.v || 0) ? 'on' : '') + '"></i>').join('') +
+    '</span><span class="n">' + n1(d.v) + '</span></div>').join('');
+
+  const quotes = [].concat(
+    (x.detail.mentor1 || []).flatMap((d) => d.ev.map((e) => [d.f.label, e])),
+    (pr.quotes || []).map((q) => ['同儕', q]),
+    (x.behaviour || []).map((b) => ['D2 過程', b])).slice(0, 8);
+
+  return '<div class="split"><div class="list">' + rows + '</div>' +
+    '<div class="detail">' +
+      '<div class="head"><div><span class="idtag">' + esc(x.id) + '</span>' +
+        '<h3>' + esc(x.name) + '</h3><div class="sub">' + esc(x.d1) +
+        (x.team ? '　·　' + esc(x.team) : '') + '</div></div>' +
+        '<div><div class="tot">' + n1(x.total) + '</div>' +
+        '<div class="cap">加權總分 · 已計入 ' + Math.round((x.coverage || 0) * 100) + '%</div></div></div>' +
+      (pills ? '<div style="margin-top:14px">' + pills + '</div>' : '') +
+      '<div class="cols">' +
+        '<div><div class="lbl">三個來源</div>' + parts +
+          '<div class="facts">' +
+            '<div><div class="k">業師差距</div><div class="v">' + (x.spread == null ? '—' : n1(x.spread)) + '</div></div>' +
+            '<div><div class="k">同儕想一起</div><div class="v">' +
+              (pr.received ? pr.yes + '/' + pr.received : '—') + '</div></div>' +
+            '<div><div class="k">自評落差</div><div class="v">' +
+              (gp.gap == null ? '—' : (gp.gap > 0 ? '+' : '') + n1(gp.gap)) + '</div></div>' +
+          '</div></div>' +
+        '<div><div class="lbl">D1 六面向　1–5</div><div class="bars">' + dims + '</div></div>' +
+      '</div>' +
+      (quotes.length ? '<div style="margin-top:28px"><div class="lbl">證據與現場紀錄</div>' +
+        '<div class="evi">' + quotes.map(([k, v]) =>
+          '<div><span>' + esc(k) + '</span>' + esc(v) + '</div>').join('') + '</div></div>' : '') +
+    '</div></div>';
+}
+
+function scoreTableHTML(list) {
+  return '<div class="scroll" style="margin-top:18px"><table id="score-table" style="min-width:1120px"><thead><tr>' +
     '<th data-k="name">候選人</th><th data-k="d1">D1 組</th><th data-k="team">D2 組</th>' +
     T.SCORING.map((s) => '<th class="num" data-k="' + s.form + '">' + esc(s.label) +
       '<br>' + Math.round(s.weight * 100) + '%</th>').join('') +
     '<th class="num" data-k="spread">業師差距</th>' +
     '<th class="num" data-k="coverage">已計入</th>' +
     '<th class="num" data-k="total">總分</th><th>旗標</th>' +
-    '</tr></thead><tbody>' +
-    list.sort(byId).map(scoreRow).join('') +
-    '</tbody></table></div>';
-
-  p.innerHTML = h;
-  bindSort(list);
+    '</tr></thead><tbody>' + list.map(scoreRow).join('') + '</tbody></table></div>';
 }
 
 const FLAG_LABEL = { BORDER: '邊界案例', ATTRIB: '貢獻歸屬待確認', STAR: '特殊亮點' };
@@ -398,7 +592,7 @@ function scoreRow(x) {
     '<td>' + idTag(x.id) + '<b>' + esc(x.name) + '</b></td>' +
     '<td>' + esc(x.d1) + '</td><td>' + esc(x.team) + '</td>' +
     T.SCORING.map((s) => '<td class="num">' + n1(x.parts[s.form]) +
-      (x.raters[s.form] > 1 ? '<br><span style="font-weight:400;font-size:10px;color:var(--ink-300)">' +
+      (x.raters[s.form] > 1 ? '<br><span style="font-weight:400;font-size:10px;color:var(--fg3)">' +
         x.raters[s.form] + ' 筆</span>' : '') + '</td>').join('') +
     '<td class="num">' + (x.spread == null ? '—' : n1(x.spread)) + '</td>' +
     '<td class="num">' + Math.round((x.coverage || 0) * 100) + '%</td>' +
@@ -503,7 +697,7 @@ function pairingHTML() {
     '已交 <b>' + submitted.length + '</b> / ' + T.allStudentIds().length + ' 人。</p>' +
     (matched.length
       ? '<div class="card"><div class="grid g3">' + matched.map(([a, b]) =>
-          '<div style="border:2px solid var(--tnda-orange);padding:10px 12px;font-size:13.5px">' +
+          '<div style="border:1px solid var(--line);background:var(--s1);padding:10px 12px;font-size:13.5px">' +
           esc(T.labelOf(a)) + '　⇄　' + esc(T.labelOf(b)) + '</div>').join('') + '</div></div>'
       : '<div class="card"><span class="sub">還沒有互選成功的配對。</span></div>');
 
@@ -528,7 +722,7 @@ function pairingHTML() {
         : '還沒交';
       return '<tr><td>' + idTag(id) + '<b>' + esc(T.nameOf(id)) + '</b></td>' +
         '<td class="num">' + (nominated[id] || 0) + '</td>' +
-        '<td>' + (target ? esc(T.labelOf(target)) : '<i style="color:var(--ink-300)">未交</i>') + '</td>' +
+        '<td>' + (target ? esc(T.labelOf(target)) : '<i style="color:var(--fg3)">未交</i>') + '</td>' +
         '<td>' + esc(state) + '</td>' +
         '<td style="font-size:12.5px">' + esc(why) + '</td></tr>';
     }).join('') + '</tbody></table></div>';
@@ -559,7 +753,7 @@ function pairingHTML() {
           (r.mates.length
             ? r.mates.map((m) => '<span class="mate' + (paired.has(m) ? ' taken' : '') + '">' +
                 esc(T.labelOf(m)) + '</span>').join('')
-            : '<i style="color:var(--ink-300)">沒有互選對象</i>') +
+            : '<i style="color:var(--fg3)">沒有互選對象</i>') +
         '</td></tr>').join('') + '</tbody></table></div>';
   });
 
@@ -653,7 +847,7 @@ function renderBrief() {
 
   let h = '<h2 class="sec">個人回饋摘要</h2>' +
     '<p class="lede">每位候選人一張，對應紙本「個人回饋摘要」那一頁。' +
-    '橘框＝有需要業師主動處理的訊號。同儕亮點句已去識別，可以直接用。</p>' +
+    '左側白線＝有需要業師主動處理的訊號。同儕亮點句已去識別，可以直接用。</p>' +
     '<div class="row-actions"><button class="btn primary inline" id="brief-text">' +
     '產生全部文字（可貼進回饋單）</button></div><div id="brief-out"></div>';
 
@@ -674,7 +868,7 @@ function renderBrief() {
       barRow(s.label, (x.parts[s.form] || 0) / 100, n1(x.parts[s.form]), 'acc')).join('') + '</div>';
 
     if (x.detail.mentor1) {
-      h += '<div class="bars" style="border-top:1px solid var(--ink-100);padding-top:10px">' +
+      h += '<div class="bars" style="border-top:1px solid var(--line2);padding-top:12px">' +
         x.detail.mentor1.map((d) => barRow(d.f.label, (d.v || 0) / 5, n1(d.v) + ' / 5', 'mut')).join('') +
         '</div>';
     }
@@ -744,13 +938,14 @@ function peerOf(id) {
 /* ── 完成度 ────────────────────────────────────────────── */
 function renderStatus() {
   const p = $('pane-status');
-  let h = '<h2 class="sec">完成度</h2><p class="lede">現場催件用。橘框＝還沒交。</p>';
+  let h = '<h2 class="sec">完成度</h2><p class="lede">現場催件用。實底＝已交，白框＝還沒交。</p>';
 
   const box = (title, items) =>
     '<h2 class="sec">' + esc(title) + '　' + items.filter((i) => i.ok).length + ' / ' + items.length + '</h2>' +
     '<div class="card"><div class="grid g4">' + items.map((i) =>
-      '<div style="border:2px solid ' + (i.ok ? 'var(--ink-200)' : 'var(--tnda-orange)') +
-      ';padding:10px 12px;font-size:13.5px' + (i.ok ? ';color:var(--ink-500)' : ';font-weight:700') + '">' +
+      '<div style="border:1px solid ' + (i.ok ? 'var(--line2)' : 'var(--fg)') +
+      ';background:' + (i.ok ? 'var(--s2)' : 'none') +
+      ';padding:10px 12px;font-size:13px' + (i.ok ? ';color:var(--fg3)' : ';color:var(--fg)') + '">' +
       esc(i.label) + (i.ok ? '' : '　未交') + '</div>').join('') + '</div></div>';
 
   // 收齊的定義寫在 app.js 的 progressItems，現場流程頁用的是同一份，
@@ -771,15 +966,18 @@ function renderRoster() {
   const p = $('pane-roster');
   const missing = T.missingNames().length;
 
+  // 姓名不在 config.js（repo 是公開的），所以要讀 T.hasName／T.nameOf，
+  // 不能讀 s.name——那一欄已經不存在了。
   const row = (id, extra) =>
     '<tr><td class="num">' + esc(id) + '</td>' +
-    '<td><input class="field" data-id="' + esc(id) + '" value="' + esc(T.hasName(id) ? T.nameOf(id) : '') + '" ' +
-      'placeholder="（尚未輸入）" style="padding:7px 9px;font-weight:700"></td>' + extra + '</tr>';
+    '<td><input class="field" data-id="' + esc(id) + '" value="' +
+      esc(T.hasName(id) ? T.nameOf(id) : '') + '" placeholder="（尚未輸入）" ' +
+      'style="padding:7px 9px"></td>' + extra + '</tr>';
 
   p.innerHTML = '<h2 class="sec">名單</h2>' +
     '<p class="lede"><b>姓名只存在 Google 試算表，不在網站原始碼裡</b>——' +
     'repo 是公開的，真名放進去等於把個資放上網。這一頁是唯一輸入姓名的地方，' +
-    '存檔後<b>所有裝置</b>（學員的表單頁、業師的流程頁、這個儀表板）下次開啟就會套用。</p>' +
+    '存檔後<b>所有裝置</b>下次開啟就會套用。</p>' +
     (missing
       ? '<div class="msg err"><b>還有 ' + missing + ' 個人沒有姓名</b>，' +
         '各頁現在顯示的是編號。用下面的「整批貼上」最快。</div>'
@@ -789,7 +987,7 @@ function renderRoster() {
     '<p class="lede">從報名表的姓名欄直接複製一整欄貼進來，<b>一行一個、照編號順序</b>' +
     '（第 1 行＝編號 ' + esc(T.STUDENTS[0].id) + '，共 ' + T.STUDENTS.length + ' 位學員）。' +
     '貼上只會填進下面的表格，還要按儲存才會寫進試算表。</p>' +
-    '<textarea class="field" id="rs-bulk" style="min-height:120px" ' +
+    '<textarea class="field" id="rs-bulk" style="min-height:120px;width:100%;padding:10px" ' +
       'placeholder="王小明&#10;陳怡君&#10;…"></textarea>' +
     '<div class="row-actions"><button class="btn inline" id="rs-fill">填進表格</button></div>' +
 
@@ -804,12 +1002,18 @@ function renderRoster() {
     '</div>' +
     '<div class="scroll" style="margin-top:14px"><table><thead><tr>' +
     '<th>編號</th><th>姓名</th><th>D1 組</th><th>D2 組</th></tr></thead><tbody>' +
-    T.STUDENTS.map((s) => row(s.id, '<td>' + esc(s.d1 || '') + '</td><td>' + esc(s.d2 || '') + '</td>')).join('') +
+    T.STUDENTS.map((s) => row(s.id,
+      '<td>' + esc(s.d1 || '') + '</td><td>' + esc(s.d2 || '') + '</td>')).join('') +
     '</tbody></table></div>' +
 
     '<h2 class="sec">業師</h2>' +
-    '<div class="scroll"><table><thead><tr><th>編號</th><th>姓名</th></tr></thead><tbody>' +
-    T.MENTORS.map((m) => row(m.id, '')).join('') + '</tbody></table></div>';
+    '<p class="lede">兩天的業師不同人，表單頁只會列出當天出席的那幾位。' +
+    '要加減人或改出席天數是改 <code>config.js</code> 的 <code>MENTORS</code>；' +
+    '這一頁只改姓名。同一個人兩天都來就只給一個編號、<code>days: [1, 2]</code>。</p>' +
+    '<div class="scroll"><table><thead><tr><th>編號</th><th>姓名</th><th>出席</th></tr></thead><tbody>' +
+    T.MENTORS.map((m) => row(m.id,
+      '<td>' + T.daysOfMentor(m.id).map((d) => 'DAY ' + d).join('、') + '</td>')).join('') +
+    '</tbody></table></div>';
 
   const inputs = () => [...p.querySelectorAll('input[data-id]')];
   const msg = (t) => { $('rs-msg').textContent = t; };
@@ -957,7 +1161,8 @@ $('btn-demo').onclick = () => {
   const EV = ['講得出另一個選項為何不採用', '拿得出前後兩版的差異', '被問到假設時主動標出來',
     '示範時能即時改參數', '把限制卡直接寫進機制'];
   const d = { peer1: [], pair1: [], mentor1: [], observe2: [], team2: [], self2: [] };
-  const M = T.allMentorIds();
+  // 兩天的業師不同人，示範資料也要分開，不然統計看起來會跟現場不一樣。
+  const M1 = T.mentorIdsForDay(1), M2 = T.mentorIdsForDay(2);
   const base = {};
   T.allStudentIds().forEach((id, i) => { base[id] = 2.4 + (i % 7) * 0.35; });
   // 補上兩個姓名欄，讓示範資料的形狀跟真表單送出來的完全一樣。
@@ -993,7 +1198,7 @@ $('btn-demo').onclick = () => {
   });
   // mentor1（兩位業師各評一半，少數重疊）
   T.allStudentIds().forEach((id, i) => {
-    [M[i % 2]].concat(i % 5 === 0 ? [M[2]] : []).forEach((m) => {
+    [M1[i % M1.length]].concat(i % 5 === 0 ? [M1[(i + 1) % M1.length]] : []).forEach((m) => {
       const r = named({ form: 'mentor1', submitter: m, subject: id, rel: '', candidate: id,
         notes: '追問三題都問過。', flags: rnd() < .12 ? pick(['BORDER', 'ATTRIB', 'STAR']) : '' });
       FIELDS.mentor1.forEach((f) => { r[f.k] = sc(base[id]); r[f.k + '_ev'] = rnd() < .5 ? pick(EV) : ''; });
@@ -1005,7 +1210,7 @@ $('btn-demo').onclick = () => {
     const members = T.teamMembers(t);
     ['上午', '下午'].forEach((slot) => {
       members.forEach((id) => {
-        const r = named({ form: 'observe2', submitter: M[ti % M.length], subject: id, rel: '',
+        const r = named({ form: 'observe2', submitter: M2[ti % M2.length], subject: id, rel: '',
           team: t, slot, behaviour: rnd() < .5 ? pick(EV) : '' });
         FIELDS.observe2.forEach((f) => { r[f.k] = sc(base[id]); });
         d.observe2.push(r);
@@ -1017,7 +1222,7 @@ $('btn-demo').onclick = () => {
       const cards = ri === 0
         ? { card_archetype: deck('archetype'), card_move: deck('moveLimit') }
         : { card_stage: deck('stage'), card_interaction: deck('interaction') };
-      const r = named(Object.assign({ form: 'team2', submitter: M[ti % M.length], subject: t, rel: '',
+      const r = named(Object.assign({ form: 'team2', submitter: M2[ti % M2.length], subject: t, rel: '',
         team: t, round,
         strength: '機制講得清楚', gap: '公平性還沒解', next: pick(EV) }, cards));
       FIELDS.team2.forEach((f) => { r[f.k] = sc(tb); r[f.k + '_ev'] = ''; });
@@ -1035,6 +1240,24 @@ $('btn-demo').onclick = () => {
   });
   setData(d, '來源：示範資料（非真實）');
 };
+
+/* ── 深淺色 ────────────────────────────────────────────
+   預設深色（現場一整天盯著看）。切換只存在這台裝置。 */
+(() => {
+  const KEY = 'tnda_dash_theme';
+  const set = (v) => {
+    document.documentElement.dataset.theme = v;
+    $('theme').textContent = v === 'dark' ? '切換淺色' : '切換深色';
+  };
+  let cur = 'dark';
+  try { cur = localStorage.getItem(KEY) || 'dark'; } catch (e) { /* 無痕模式 */ }
+  set(cur);
+  $('theme').onclick = () => {
+    cur = cur === 'dark' ? 'light' : 'dark';
+    set(cur);
+    try { localStorage.setItem(KEY, cur); } catch (e) { /* 略過 */ }
+  };
+})();
 
 A.guard(document.body);
 A.mountBack($('back'), 'staff.html');

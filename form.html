@@ -219,8 +219,11 @@ function renderSetup() {
     v.appendChild(n);
   }
 
-  const meLabel = F.role === 'mentor' ? '你是哪位業師' : '你是誰（對照名牌上的編號）';
-  const pool = F.role === 'mentor' ? T.allMentorIds() : T.allStudentIds();
+  const meLabel = F.role === 'mentor'
+    ? '你是哪位業師（DAY ' + F.day + '）'
+    : '你是誰（對照名牌上的編號）';
+  // 業師兩天不同人，只列出這份表單那一天出席的那幾位。
+  const pool = F.role === 'mentor' ? T.mentorIdsForDay(F.day) : T.allStudentIds();
   const lab = document.createElement('span');
   lab.className = 'label'; lab.textContent = 'STEP 1 — ' + meLabel;
   v.appendChild(lab);
@@ -547,7 +550,8 @@ A.syncNames().then(() => { A.nameNotice(document.querySelector('.app')); render(
 
 const me = A.draft.identity();
 if (me && me.role === F.role && me.id) {
-  const pool = F.role === 'mentor' ? T.allMentorIds() : T.allStudentIds();
+  // 業師兩天不同人，只列出這份表單那一天出席的那幾位。
+  const pool = F.role === 'mentor' ? T.mentorIdsForDay(F.day) : T.allStudentIds();
   if (pool.includes(me.id)) { S.me = me; loadDraft(); }
 }
 render();

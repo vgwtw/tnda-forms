@@ -156,6 +156,8 @@ function optionList(from, me) {
   if (from === 'all-students')      return asPeople(T.allStudentIds());
   if (from === 'students-except-me') return asPeople(T.allStudentIds().filter((id) => id !== me));
   if (from === 'mentors')           return asPeople(T.allMentorIds());
+  if (from === 'mentors-day1')      return asPeople(T.mentorIdsForDay(1));
+  if (from === 'mentors-day2')      return asPeople(T.mentorIdsForDay(2));
   if (from === 'd1-groups')         return T.d1Groups().map((g) => ({ v: g, label: g }));
   if (from === 'd2-teams')          return T.d2Teams().map((t) => ({ v: t, label: t }));
   // cards:archetype / cards:moveLimit / cards:stage / cards:interaction
