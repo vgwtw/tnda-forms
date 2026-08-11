@@ -262,7 +262,7 @@ code{background:var(--s2);color:var(--fg2)}
 </main>
 </div>
 
-<script src="config.js"></script>
+<script src="config.js?v=d087b212"></script>
 <script src="app.js"></script>
 <script>
 (() => {
@@ -1071,9 +1071,20 @@ function renderRoster() {
     // 只填學員，業師那幾格自己打——順序對不上時比較不會出事。
     const stu = inputs().filter((el) => T.person(el.dataset.id).role === 'student');
     lines.slice(0, stu.length).forEach((nm, i) => { stu[i].value = nm; });
-    msg('填了 ' + Math.min(lines.length, stu.length) + ' 個名字' +
-      (lines.length > stu.length ? '（多出來的 ' + (lines.length - stu.length) + ' 行忽略）' : '') +
-      '。請對一下編號有沒有跑掉，再按儲存。');
+
+    /* 行數對不上時要講清楚「系統認為有幾位」——最常見的原因不是貼錯，
+       而是這台裝置讀到了快取的舊 config.js（人數還是上一版）。
+       只說「多出來的 N 行忽略」會讓人以為是自己貼錯。 */
+    if (lines.length === stu.length) {
+      msg('填了 ' + lines.length + ' 個名字。請對一下編號有沒有跑掉，再按儲存。');
+    } else {
+      msg('⚠ 你貼了 ' + lines.length + ' 行，但系統目前只有 ' + stu.length + ' 位學員' +
+        (lines.length > stu.length
+          ? '，多出來的 ' + (lines.length - stu.length) + ' 行被忽略了。'
+          : '，還有 ' + (stu.length - lines.length) + ' 格是空的。') +
+        ' 如果人數應該是 ' + lines.length + '，代表這台裝置讀到的是舊版設定——' +
+        '請強制重新整理（Cmd/Ctrl + Shift + R）再貼一次。');
+    }
   };
 
   $('rs-reset').onclick = () => { renderRoster(); msg('已還原成目前生效的名單。'); };
