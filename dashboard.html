@@ -600,9 +600,9 @@ function scoreTableHTML(list) {
 
 const FLAG_LABEL = { BORDER: '邊界案例', ATTRIB: '貢獻歸屬待確認', STAR: '特殊亮點' };
 
-/** 一列業師回饋單抽到的卡：上午是角色＋招式，下午是場景＋互動。 */
+/** 一列業師回饋單抽到的卡：角色卡兩段都記，進階條件卡只有第二段有。 */
 function cardsOf(r) {
-  return ['card_archetype', 'card_move', 'card_stage', 'card_interaction']
+  return ['card_archetype', 'card_advanced']
     .map((k) => r[k]).filter(Boolean)
     .map((code) => esc(A.cardLabel(code))).join('<br>') || '—';
 }
@@ -1277,9 +1277,9 @@ $('btn-demo').onclick = () => {
     T.FORMS.team2.head.find((f) => f.k === 'round').options.forEach((round, ri) => {
       const tb = 2.6 + (ti % 5) * 0.4;
       const deck = (n) => pick(T.CARDS[n]).v;
-      const cards = ri === 0
-        ? { card_archetype: deck('archetype'), card_move: deck('moveLimit') }
-        : { card_stage: deck('stage'), card_interaction: deck('interaction') };
+      // 第一段只有角色卡，第二段才加進階條件卡
+      const cards = { card_archetype: deck('archetype') };
+      if (ri > 0) cards.card_advanced = deck('advanced');
       const r = named(Object.assign({ form: 'team2', submitter: M2[ti % M2.length], subject: t, rel: '',
         team: t, round,
         strength: '機制講得清楚', gap: '公平性還沒解', next: pick(EV) }, cards));
