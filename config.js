@@ -24,7 +24,7 @@ const ENDPOINT = 'https://script.google.com/macros/s/AKfycbz8DHl5GENOFtvxOa8EGhU
      id   編號。就用名牌／桌牌上印的那個號碼，全場唯一、之後不要改。
           （改了等於換一個人，已收的資料會對不上。）
      d1   Day1 分組，發表與同儕評價用，一組約 20 人。
-     d2   Day2 分組，一組 3–4 人。Day1 結束後才編得出來——
+     d2   Day2 分組，一組 最多 3 人。Day1 結束後才編得出來——
           當天可以整欄留空字串，隔天填完存檔重新上架即可。
 
    ⚠️ **這裡沒有姓名，是刻意的。** 這個 repo 是公開的，真實姓名放進來
@@ -45,34 +45,34 @@ const STUDENTS = [
   { id: '08', d1: 'A 組',    d2: 'T08' },
   { id: '09', d1: 'A 組',    d2: 'T09' },
   { id: '10', d1: 'A 組',    d2: 'T10' },
-  { id: '11', d1: 'A 組',    d2: 'T01' },
-  { id: '12', d1: 'A 組',    d2: 'T02' },
-  { id: '13', d1: 'A 組',    d2: 'T03' },
-  { id: '14', d1: 'A 組',    d2: 'T04' },
-  { id: '15', d1: 'A 組',    d2: 'T05' },
-  { id: '16', d1: 'A 組',    d2: 'T06' },
-  { id: '17', d1: 'A 組',    d2: 'T07' },
-  { id: '18', d1: 'A 組',    d2: 'T08' },
-  { id: '19', d1: 'A 組',    d2: 'T09' },
-  { id: '20', d1: 'B 組',    d2: 'T10' },
-  { id: '21', d1: 'B 組',    d2: 'T01' },
-  { id: '22', d1: 'B 組',    d2: 'T02' },
-  { id: '23', d1: 'B 組',    d2: 'T03' },
-  { id: '24', d1: 'B 組',    d2: 'T04' },
-  { id: '25', d1: 'B 組',    d2: 'T05' },
-  { id: '26', d1: 'B 組',    d2: 'T06' },
-  { id: '27', d1: 'B 組',    d2: 'T07' },
-  { id: '28', d1: 'B 組',    d2: 'T08' },
-  { id: '29', d1: 'B 組',    d2: 'T09' },
-  { id: '30', d1: 'B 組',    d2: 'T10' },
-  { id: '31', d1: 'B 組',    d2: 'T01' },
-  { id: '32', d1: 'B 組',    d2: 'T02' },
-  { id: '33', d1: 'B 組',    d2: 'T03' },
-  { id: '34', d1: 'B 組',    d2: 'T04' },
-  { id: '35', d1: 'B 組',    d2: 'T05' },
-  { id: '36', d1: 'B 組',    d2: 'T06' },
-  { id: '37', d1: 'B 組',    d2: 'T07' },
-  { id: '38', d1: 'B 組',    d2: 'T08' },
+  { id: '11', d1: 'A 組',    d2: 'T11' },
+  { id: '12', d1: 'A 組',    d2: 'T12' },
+  { id: '13', d1: 'A 組',    d2: 'T13' },
+  { id: '14', d1: 'A 組',    d2: 'T01' },
+  { id: '15', d1: 'A 組',    d2: 'T02' },
+  { id: '16', d1: 'A 組',    d2: 'T03' },
+  { id: '17', d1: 'A 組',    d2: 'T04' },
+  { id: '18', d1: 'A 組',    d2: 'T05' },
+  { id: '19', d1: 'A 組',    d2: 'T06' },
+  { id: '20', d1: 'B 組',    d2: 'T07' },
+  { id: '21', d1: 'B 組',    d2: 'T08' },
+  { id: '22', d1: 'B 組',    d2: 'T09' },
+  { id: '23', d1: 'B 組',    d2: 'T10' },
+  { id: '24', d1: 'B 組',    d2: 'T11' },
+  { id: '25', d1: 'B 組',    d2: 'T12' },
+  { id: '26', d1: 'B 組',    d2: 'T13' },
+  { id: '27', d1: 'B 組',    d2: 'T01' },
+  { id: '28', d1: 'B 組',    d2: 'T02' },
+  { id: '29', d1: 'B 組',    d2: 'T03' },
+  { id: '30', d1: 'B 組',    d2: 'T04' },
+  { id: '31', d1: 'B 組',    d2: 'T05' },
+  { id: '32', d1: 'B 組',    d2: 'T06' },
+  { id: '33', d1: 'B 組',    d2: 'T07' },
+  { id: '34', d1: 'B 組',    d2: 'T08' },
+  { id: '35', d1: 'B 組',    d2: 'T09' },
+  { id: '36', d1: 'B 組',    d2: 'T10' },
+  { id: '37', d1: 'B 組',    d2: 'T11' },
+  { id: '38', d1: 'B 組',    d2: 'T12' },
 ];
 
 /* 業師同樣用 id，姓名也存在試算表。
@@ -125,7 +125,8 @@ const SCALE_HINT = '1 幾乎沒有證據　2 不足　3 達入學門檻　4 清�
    紙本牌組有 A11／A12、S11／S12 兩張自訂卡——真的用到就照樣加一行。 */
 
 const CARDS = {
-  /* 上午題：角色原型卡 抽 1 */
+  /* 第一段：角色原型卡 抽 1。題目到此為止，不給規格——
+     「幾招、要不要分類、怎麼說明」正是要他們自己拆解出來的。 */
   archetype: [
     { v: 'A01', label: '近身壓制　PRESSURE' },
     { v: 'A02', label: '遠程牽制　ZONING' },
@@ -137,8 +138,30 @@ const CARDS = {
     { v: 'A08', label: '以體型取勝　SIZE' },
     { v: 'A09', label: '讀心博弈　MIND GAME' },
     { v: 'A10', label: '資源管理　RESOURCE' },
+    { v: 'A11', label: '型態切換　STANCE' },
+    { v: 'A12', label: '陷阱設置　TRAP' },
+    { v: 'A13', label: '位移特化　MOBILITY' },
   ],
-  /* 上午題：招式限制卡 抽 1 */
+  /* 第二段：進階條件卡 抽 1。都是 frame 與風險報酬的具體切面，
+     業師展演完才發，讓不懂格鬥的人也接得住。 */
+  advanced: [
+    { v: 'X01', label: '有一招起手很慢，但命中報酬極高' },
+    { v: 'X02', label: '有一招是確反專用：安全但報酬低' },
+    { v: 'X03', label: '必須有明確的確反視窗——被防住要付代價' },
+    { v: 'X04', label: '有一招的風險由自己承擔，失敗會反噬' },
+    { v: 'X05', label: '有一招消耗資源，且資源要讓對手看得見' },
+    { v: 'X06', label: '有一招被打斷時，代價大於收益' },
+    { v: 'X07', label: '要有一組相剋關係：這招怕那招' },
+    { v: 'X08', label: '有一招的收益隨距離或時機改變' },
+    { v: 'X09', label: '有一招是假動作，用來騙對手的防禦選擇' },
+    { v: 'X10', label: '有一招在血量低時性能改變' },
+    { v: 'X11', label: '至少一招要說得出 startup／active／recovery' },
+    { v: 'X12', label: '有一招會讓對手也拿到某種好處' },
+    { v: 'X13', label: '有一招只有在讀對對手意圖時才成立' },
+  ],
+
+  /* 以下三副是雙題版留下來的，單一主題兩段式用不到，先留著不刪。
+     要改回雙題再把它們接上 team2 的 head 即可。 */
   moveLimit: [
     { v: 'M01', label: '招式上限 5 招，需涵蓋攻／防／位移' },
     { v: 'M02', label: '必須有一招高風險高報酬' },
@@ -183,8 +206,12 @@ const CARDS = {
   ],
 };
 
-const ROUND_AM = '上午 · 角色招式';
-const ROUND_PM = '下午 · 場景互動';
+/* Day2 是「單一主題、兩段推進」：同一個角色做到底。
+   第一段開放式，規格由學員自己拆解出來；第二段才加入 frame 與
+   風險報酬這類格鬥本質的條件——非格鬥玩家通常不懂，所以中間
+   安排業師展演與拆解，讓他們先看得懂再設計。 */
+const ROUND_1 = '第一段 · 概念與 movelist';
+const ROUND_2 = '第二段 · 加入 frame 與風險報酬';
 
 const FORMS = {
 
@@ -282,7 +309,7 @@ const FORMS = {
     brief: '看的是<strong>過程</strong>不是成果。各項 1–5',
     head: [
       { k: 'team', type: 'pick', label: '組別', optionsFrom: 'd2-teams', required: true, key: true },
-      { k: 'slot', type: 'pick', label: '時段', options: ['上午', '下午'], required: true, key: true },
+      { k: 'slot', type: 'pick', label: '段次', options: ['第一段', '第二段'], required: true, key: true },
     ],
     per: {
       scope: 'd2-members',
@@ -304,26 +331,23 @@ const FORMS = {
     day: 2, role: 'mentor', weightLabel: '15%',
     eyebrow: 'DAY 2 · TEAM OUTPUT',
     title: '業師回饋單',
-    brief: '每組每題一張。團隊成果佔總分 15%，兩題平均後套用到組內每一位成員。',
+    brief: '每組每段一張。團隊成果佔總分 15%，兩段平均後套用到組內每一位成員。',
     subjectFrom: 'team',
     head: [
       { k: 'team',  type: 'pick', label: '組別', optionsFrom: 'd2-teams', required: true, key: true },
-      { k: 'round', type: 'pick', label: '題目', required: true, key: true,
-        options: [ROUND_AM, ROUND_PM] },
-      // showIf：選了上午題才出現角色／招式兩張，下午題才出現場景／互動兩張。
+      { k: 'round', type: 'pick', label: '段次', required: true, key: true,
+        options: [ROUND_1, ROUND_2] },
+      // 角色卡兩段都要記（同一個角色做到底）；進階條件卡只有第二段有。
       { k: 'card_archetype', type: 'pick', label: '抽到的角色原型卡',
-        optionsFrom: 'cards:archetype', showIf: { round: ROUND_AM } },
-      { k: 'card_move', type: 'pick', label: '抽到的招式限制卡',
-        optionsFrom: 'cards:moveLimit', showIf: { round: ROUND_AM } },
-      { k: 'card_stage', type: 'pick', label: '抽到的場景卡',
-        optionsFrom: 'cards:stage', showIf: { round: ROUND_PM } },
-      { k: 'card_interaction', type: 'pick', label: '抽到的互動限制卡',
-        optionsFrom: 'cards:interaction', showIf: { round: ROUND_PM } },
+        optionsFrom: 'cards:archetype' },
+      { k: 'card_advanced', type: 'pick', label: '抽到的進階條件卡',
+        optionsFrom: 'cards:advanced', showIf: { round: ROUND_2 } },
     ],
     self: {
       fields: [
         { k: 't_creative', type: 'scale', label: '設計創意與獨特性', weight: 30, evidence: true, hint: '能否跳出既有框架' },
-        { k: 't_system',   type: 'scale', label: '機制合理與可行',   weight: 30, evidence: true, hint: '攻防、風險報酬、frame、公平性' },
+        { k: 't_system',   type: 'scale', label: '機制合理與可行',   weight: 30, evidence: true,
+          hint: '第一段看攻防關係說不說得通；第二段才要求 frame 與風險報酬' },
         { k: 't_goal',     type: 'scale', label: '體驗目標清晰',     weight: 25, evidence: true, hint: '想讓玩家感受什麼，並扣回限制' },
         { k: 't_finish',   type: 'scale', label: '完成度與呈現',     weight: 15, evidence: true, hint: '產出完整、表達清楚、時間掌控' },
         { k: 'strength', type: 'memo', label: '亮點' },
@@ -440,56 +464,80 @@ const SCHEDULE = {
              '互相選到就直接成一組，沒配到的現場自行找人。',
         todo: ['請全員填「選一位最想同組的人」，<strong>當場等它收齊</strong>',
                '儀表板 →「D1 同儕訊號」→ 開主辦模式看互選配對，宣布成功配對的組',
-               '沒配到的現場自行找人湊滿 3–4 人；編好後填進 config.js 每一列的 d2 欄，存檔重新上架',
+               '沒配到的現場自行找人湊滿 3 人；編好後填進 config.js 每一列的 d2 欄，存檔重新上架',
                '當面發個人回饋摘要（錄取與否都發）'],
         forms: ['pair1'] },
     ],
   },
   2: {
     date: '2026-08-15',
-    title: '3–4 人一組現場解題',
+    title: '最多 3 人一組現場解題',
     blocks: [
       { from: '10:00', to: '10:15', label: '暖身、分組、規則公開',
-        you: '3–4 人一組。<strong>重新整理</strong>表單頁面才看得到你的新組別。',
+        note: '單一主題、兩段推進：同一個角色做到底',
+        you: '最多 3 人一組。<strong>重新整理</strong>表單頁面才看得到你的新組別。',
         todo: ['確認 config.js 的 d2 欄已填好並重新上架',
-               '請學員<strong>重新整理</strong>頁面，才看得到新分組'] },
-      { from: '10:15', to: '10:25', label: '抽上午題',
-        note: '角色原型卡＋招式限制卡',
-        todo: ['記下每組抽到哪兩張卡——業師回饋單裡是下拉選單，照代號選就好'] },
-      { from: '10:25', to: '11:55', label: '上午衝刺', key: true,
-        note: '「為角色設計招式」；業師巡迴觀察',
-        you: 'AI 全程開放，但<strong>用過的 prompt 要交給業師</strong>。' +
-             '評分看的是你怎麼拆題、怎麼驗證 AI 的產出，不是最後做出什麼。',
-        todo: ['業師：巡迴時就記，結束前填完個人過程觀察表（時段選<strong>上午</strong>）',
-               '提醒各組保留 prompt 紀錄，發表時一併提交'],
+               '請學員<strong>重新整理</strong>頁面，才看得到新分組',
+               '說明今天是<strong>一個題目分兩段</strong>，不是兩個不同的題目'] },
+
+      { from: '10:15', to: '10:25', label: '讀題與拆解',
+        note: '各組抽一張角色原型卡。題目只到這裡，規格自己定義',
+        you: '題目<strong>刻意不給規格</strong>——幾招、要不要分類、要說明什麼，' +
+             '是你們讀完題自己拆解出來的判斷，那正是我們要看的東西。',
+        todo: ['各組抽角色原型卡，代號抄進抽卡紀錄表',
+               '口頭強調：<strong>不要問「要幾招」</strong>，那是你們要回答的'] },
+
+      { from: '10:25', to: '11:55', label: '第一段衝刺', key: true,
+        note: '「為這個角色設計一套 movelist」；業師巡迴觀察',
+        you: '先讀題、拆解、實際查資料，再形成你們自己的解題要點，最後才動手設計。' +
+             'AI 全程開放，但<strong>用過的 prompt 要交</strong>。',
+        todo: ['業師：巡迴時就記，結束前填完觀察表（段次選<strong>第一段</strong>）',
+               '提醒各組保留 prompt 紀錄'],
         forms: ['observe2'] },
-      { from: '11:55', to: '12:40', label: '上午發表＋講評',
-        note: '10 組，每組約 4 分',
-        you: '交招式表＋一頁理由。可選一招做紙上或引擎簡易演示。',
-        todo: ['業師：每組講評完填業師回饋單（題目選<strong>上午 · 角色招式</strong>）'],
+
+      { from: '11:55', to: '12:15', label: '第一段桌邊說明',
+        note: '不上台。業師走到桌邊聽各組講，每組約 90 秒',
+        you: '不用做簡報，把你們的判斷講給業師聽就好：<strong>為誰做、想讓玩家體驗什麼、' +
+             '為什麼是這幾招</strong>。',
+        todo: ['業師：每組聽完當場填業師回饋單（段次選<strong>第一段</strong>）',
+               '控時的人跟著業師走，時間到就喊下一組'],
         forms: ['team2'] },
-      { from: '12:40', to: '13:40', label: '午休',
-        note: '自理', todo: ['主辦看「完成度」，補齊上午沒填完的觀察表與回饋單'] },
-      { from: '13:40', to: '13:50', label: '抽下午題',
-        note: '場景卡＋互動限制卡', todo: ['一樣記下每組抽到哪兩張卡'] },
-      { from: '13:50', to: '15:20', label: '下午衝刺', key: true,
-        note: '「為場景設計互動」；業師巡迴觀察',
-        you: '同一組人、新的題目。一樣看過程，prompt 一樣要交。',
-        todo: ['業師：個人過程觀察表，時段選<strong>下午</strong>（跟上午是兩張，不要覆蓋）'],
+
+      { from: '12:15', to: '13:15', label: '午休',
+        note: '自理', todo: ['主辦看「完成度」，補齊第一段沒填完的觀察表與回饋單'] },
+
+      { from: '13:15', to: '14:00', label: '業師展演：frame 與風險報酬', key: true,
+        note: '實際玩給他們看。非格鬥玩家沒看過就設計不出來',
+        you: '這一段<strong>不評分</strong>，放心問。看不懂就當場舉手——' +
+             '等一下第二段要用到的就是這些概念。',
+        todo: ['實機展演：起手、確反、被防住的代價、風險報酬的取捨',
+               '拆解一個具體例子給他們看，不要只講定義',
+               '最後再發第二段的進階條件卡'] },
+
+      { from: '14:00', to: '15:30', label: '第二段衝刺', key: true,
+        note: '同一個角色，加入抽到的進階條件卡重做；業師巡迴觀察',
+        you: '不是重來，是<strong>把第一段的設計往下推</strong>：' +
+             '用剛剛學到的 frame 與風險報酬，回頭檢查你們的招式站不站得住。',
+        todo: ['業師：觀察表段次選<strong>第二段</strong>——跟第一段是兩張，選錯補不回來',
+               '重點看他們有沒有真的把展演的概念用進去'],
         forms: ['observe2'] },
-      { from: '15:20', to: '16:05', label: '下午發表＋講評',
-        note: '10 組',
-        you: '交互動設計說明圖＋理由。可選簡易原型或分鏡。',
-        todo: ['業師：業師回饋單，題目選<strong>下午 · 場景互動</strong>'],
+
+      { from: '15:30', to: '16:15', label: '第二段發表＋講評',
+        note: '13 組，每組約 3 分',
+        you: '交 movelist ＋一頁理由，說明第二段改了什麼、為什麼。',
+        todo: ['業師：每組講評完填業師回饋單（段次選<strong>第二段</strong>）',
+               '收各組的 prompt 紀錄'],
         forms: ['team2'] },
-      { from: '16:05', to: '16:30', label: '團隊內互評、業師合議',
-        you: '填<strong>自評與團隊內互評單</strong>：先評自己，再評兩位隊友並寫具體事例。不計分。',
-        todo: ['學員：填自評與團隊內互評單',
-               '主辦：儀表板抓最新資料 →「錄取總分」，確認每個人的「已計入」都是 100%'],
+
+      { from: '16:15', to: '16:40', label: '團隊內互評、業師合議',
+        you: '填自評與團隊內互評單。<strong>寫具體事例</strong>，不要寫形容詞。',
+        todo: ['業師：對照自評與隊友評的落差，差距 ±1.0 以上拿出來討論',
+               '主辦：儀表板抓最新資料，確認每個人的「已計入」都是 100%'],
         forms: ['self2'] },
-      { from: '16:30', to: '17:00', label: '結果講評與課程預告',
-        note: '未來課程預告與說明',
-        todo: ['儀表板「匯出」→ 下載總分表 CSV'] },
+
+      { from: '16:40', to: '17:00', label: '結果講評與課程預告',
+        note: 'UE5 單機 3D 格鬥程式課',
+        todo: ['儀表板「匯出」→ 下載總分表 CSV 給合議會議'] },
     ],
   },
 };
