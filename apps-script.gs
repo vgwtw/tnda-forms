@@ -142,12 +142,32 @@ function saveRoster_(p) {
   var ids = Object.keys(names);
   if (!ids.length) return json_({ ok: true, saved: 0 });
 
+  /* 合併，不是覆寫。名單是分好幾次輸入的——業師先到、學員名單後到，
+     人數還可能再變。整份覆寫的話，只存業師那幾筆就會把學員全清掉。
+     值為空字串＝把那個 id 從名單移除。 */
+  var merged = {}, order = [];
   var last = sh.getLastRow();
+  if (last > 1) {
+    var old = sh.getRange(2, 1, last - 1, 2).getValues();
+    for (var i = 0; i < old.length; i++) {
+      var oid = String(old[i][0] || '').trim();
+      if (!oid) continue;
+      if (!(oid in merged)) order.push(oid);
+      merged[oid] = String(old[i][1] || '');
+    }
+  }
+  for (var j = 0; j < ids.length; j++) {
+    if (!(ids[j] in merged)) order.push(ids[j]);
+    merged[ids[j]] = String(names[ids[j]] || '');
+  }
+  var rows = [];
+  for (var k = 0; k < order.length; k++) {
+    if (merged[order[k]] !== '') rows.push([order[k], merged[order[k]]]);
+  }
+
   if (last > 1) sh.getRange(2, 1, last - 1, 2).clearContent();
-  sh.getRange(2, 1, ids.length, 2).setValues(ids.map(function (id) {
-    return [id, String(names[id] || '')];
-  }));
-  return json_({ ok: true, saved: ids.length });
+  if (rows.length) sh.getRange(2, 1, rows.length, 2).setValues(rows);
+  return json_({ ok: true, saved: ids.length, total: rows.length });
 }
 
 function readRoster_() {

@@ -262,7 +262,7 @@ code{background:var(--s2);color:var(--fg2)}
 </main>
 </div>
 
-<script src="config.js?v=bb8b0b61"></script>
+<script src="config.js?v=20f6998d"></script>
 <script src="app.js?v=06e123e4"></script>
 <script>
 (() => {
@@ -1097,6 +1097,8 @@ function renderRoster() {
   };
 
   $('rs-reset').onclick = () => { renderRoster(); msg('已還原成目前生效的名單。'); };
+  /* 可以分次存。名單是陸續到齊的——業師先確定、學員名單後到、人數還會變。
+     後端是合併寫入，所以只送有填的那幾筆不會清掉之前存過的。 */
   $('rs-save').onclick = async () => {
     const map = {};
     let blank = 0;
@@ -1105,13 +1107,18 @@ function renderRoster() {
       if (!v) { blank++; return; }
       map[el.dataset.id] = v;
     });
-    if (blank) return msg('有 ' + blank + ' 格還沒填。姓名不能留空——沒填的人在各頁會只顯示編號。');
+    if (!Object.keys(map).length) {
+      return msg('一格都沒填，沒有東西可以存。');
+    }
     msg('儲存中…');
     try {
       await A.saveNames(map);
       PEER_CACHE = null;
       renderRoster();
-      msg('已存到試算表，' + Object.keys(map).length + ' 筆。其他裝置下次開啟就會更新。');
+      msg('已存 ' + Object.keys(map).length + ' 筆到試算表。' +
+        (blank ? '還有 ' + blank + ' 格沒填，那幾位在各頁會顯示編號；'
+               + '之後填好再按一次儲存就好，不會蓋掉這次存的。'
+               : '名單齊全，其他裝置下次開啟就會更新。'));
     } catch (err) {
       msg('存檔失敗：' + (err.message || err));
     }

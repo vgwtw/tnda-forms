@@ -444,7 +444,7 @@ const SCHEDULE = {
         forms: ['mentor1', 'peer1'] },
       { from: '14:35', to: '14:45', label: '準備時間',
         note: '跨組對分',
-        todo: ['交換邊界案例、說明證據'] },
+        todo: ['交換及格邊緣案例、說明標準'] },
       { from: '14:45', to: '16:00', label: '答辯 Block 3', key: true,
         note: '每室 5 人 × 15 分',
         you: '換場 2 分鐘填同儕評價',
