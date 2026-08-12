@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""把 config.js 的內容雜湊蓋進各頁的 <script src="config.js?v=…">。
+"""把 config.js 與 app.js 的內容雜湊蓋進各頁的 <script src="…?v=…">。
 
 為什麼要這個：GitHub Pages 對所有檔案送 `cache-control: max-age=600`，
 瀏覽器還會在那之後繼續沿用舊檔。config.js 一改（改人數、改分組、
@@ -20,24 +20,31 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-CONFIG = HERE / 'config.js'
-PATTERN = re.compile(r'(<script src="config\.js)(\?v=[0-9a-f]+)?(">)')
+# 兩支都要蓋。app.js 沒蓋過版本號害我踩過一次：改了 app.js 的匯出，
+# 瀏覽器照樣用舊的，畫面報「某函式不存在」，但原始碼看起來完全正確。
+TRACKED = ('config.js', 'app.js')
 
 
-def stamp():
-    return hashlib.sha1(CONFIG.read_bytes()).hexdigest()[:8]
+def pattern(name):
+    return re.compile(r'(<script src="%s)(\?v=[0-9a-f]+)?(">)' % re.escape(name))
+
+
+def stamp(name):
+    return hashlib.sha1((HERE / name).read_bytes()).hexdigest()[:8]
 
 
 def main():
     check = '--check' in sys.argv
-    v = stamp()
+    vs = {n: stamp(n) for n in TRACKED}
     stale, done = [], []
 
     for path in sorted(HERE.glob('*.html')):
-        s = path.read_text(encoding='utf-8')
-        if not PATTERN.search(s):
-            continue
-        new = PATTERN.sub(lambda m: '%s?v=%s%s' % (m.group(1), v, m.group(3)), s)
+        s = new = path.read_text(encoding='utf-8')
+        for n in TRACKED:
+            pat = pattern(n)
+            if pat.search(new):
+                new = pat.sub(
+                    lambda m, n=n: '%s?v=%s%s' % (m.group(1), vs[n], m.group(3)), new)
         if new == s:
             continue
         stale.append(path.name)
@@ -47,16 +54,18 @@ def main():
 
     if check:
         if stale:
-            print('這幾頁的 config.js 版本號過期了：' + '、'.join(stale))
+            print('這幾頁的版本號過期了：' + '、'.join(stale))
             print('跑 ./蓋版本.py 之後再 push。')
             return 1
-        print('版本號都是最新的（v=%s）。' % v)
+        print('版本號都是最新的（%s）。'
+              % '、'.join('%s=%s' % (n, vs[n]) for n in TRACKED))
         return 0
 
+    tag = '、'.join('%s=%s' % (n, vs[n]) for n in TRACKED)
     if done:
-        print('蓋上 v=%s：%s' % (v, '、'.join(done)))
+        print('蓋上 %s：%s' % (tag, '、'.join(done)))
     else:
-        print('版本號已經是 v=%s，沒有要改的。' % v)
+        print('版本號已經是 %s，沒有要改的。' % tag)
     return 0
 
 

@@ -31,8 +31,8 @@
   <footer class="foot"><div class="inner" id="foot"></div></footer>
 </div>
 
-<script src="config.js?v=ef7dd231"></script>
-<script src="app.js"></script>
+<script src="config.js?v=bb8b0b61"></script>
+<script src="app.js?v=06e123e4"></script>
 <script>
 (() => {
 'use strict';
@@ -224,6 +224,28 @@ function renderSetup() {
     : '你是誰（對照名牌上的編號）';
   // 業師兩天不同人，只列出這份表單那一天出席的那幾位。
   const pool = F.role === 'mentor' ? T.mentorIdsForDay(F.day) : T.allStudentIds();
+
+  /* 掃自己的 QR 進來就已經認過人了，不用再從一長串裡挑一次——
+     那一步正是「填到別人身上」的來源。已認人時只顯示一行確認，
+     真的認錯還是可以按「換人」退回完整名單。 */
+  const known = S.me && pool.indexOf(S.me.id) >= 0;
+  if (known && !S.pickAgain) {
+    const row = document.createElement('div');
+    row.className = 'note';
+    row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px';
+    row.innerHTML = '<span><span style="font:900 15px/1 var(--font-display);' +
+      'color:var(--tnda-orange);margin-right:8px">' + esc(S.me.id) + '</span>' +
+      '<b style="font-size:15px">' + esc(T.nameOf(S.me.id)) + '</b>' +
+      '<br><span style="font-size:12.5px;color:var(--ink-500)">這一張會用這個身分送出</span></span>';
+    const sw = document.createElement('a');
+    sw.href = '#'; sw.textContent = '換人';
+    sw.style.cssText = 'font-size:12.5px;color:var(--ink-500);' +
+      'border-bottom:1px solid var(--ink-200);white-space:nowrap';
+    sw.onclick = (e) => { e.preventDefault(); S.pickAgain = true; render(); };
+    row.appendChild(sw);
+    v.appendChild(row);
+  } else {
+
   const lab = document.createElement('span');
   lab.className = 'label'; lab.textContent = 'STEP 1 — ' + meLabel;
   v.appendChild(lab);
@@ -239,11 +261,13 @@ function renderSetup() {
     b.onclick = () => {
       S.me = { id, role: F.role };
       A.draft.identity(S.me);
+      S.pickAgain = false;
       loadDraft(); render();
     };
     box.appendChild(b);
   });
   v.appendChild(box);
+  }
 
   if (S.me && F.head) {
     const l2 = document.createElement('span');
@@ -549,6 +573,7 @@ A.mountBack($('back'),
 A.nameNotice(document.querySelector('.app'));
 A.syncNames().then(() => { A.nameNotice(document.querySelector('.app')); render(); });
 
+A.claimIdentity();
 const me = A.draft.identity();
 if (me && me.role === F.role && me.id) {
   // 業師兩天不同人，只列出這份表單那一天出席的那幾位。

@@ -40,6 +40,15 @@
 .fbtn.sent{border-color:var(--ink-200);background:var(--ink-050);color:var(--ink-300)}
 .fbtn.sent .go{color:var(--ink-300)}
 
+.whois{display:flex;align-items:center;justify-content:space-between;gap:10px;
+       border:2px solid var(--tnda-black);padding:10px 12px;margin-bottom:14px;
+       font-size:13.5px;line-height:1.5}
+.whois b{font-size:16px}
+.whois .no{font:900 15px/1 var(--font-display);color:var(--tnda-orange);margin-right:6px}
+.whois a{color:var(--ink-500);border-bottom:1px solid var(--ink-200);
+         white-space:nowrap;font-size:12.5px}
+.whois.none{border-color:var(--tnda-orange);background:var(--orange-100)}
+
 .foot-note{margin-top:26px;border-top:2px solid var(--tnda-black);padding-top:14px;
            font-size:12.5px;color:var(--ink-500);line-height:1.7}
 .err{border:2px solid var(--tnda-orange);background:var(--orange-100);padding:14px;
@@ -62,8 +71,8 @@
   </main>
 </div>
 
-<script src="config.js?v=ef7dd231"></script>
-<script src="app.js"></script>
+<script src="config.js?v=bb8b0b61"></script>
+<script src="app.js?v=06e123e4"></script>
 <script>
 (() => {
 'use strict';
@@ -97,6 +106,9 @@ const today = days.find((d) => T.SCHEDULE[d].date === todayISO());
 const DAY = days.includes(asked) ? asked : (today || days[0]);
 const S = T.SCHEDULE[DAY] || { blocks: [] };
 
+// 名牌上的 QR 帶自己的編號，掃進來就認人，不用自己在名單裡找。
+A.claimIdentity();
+
 A.mountBack(document.getElementById('back'), 'index.html', '選一天');
 document.getElementById('eyebrow').textContent = 'TNDA 前導甄選　學員　DAY ' + DAY;
 document.getElementById('h1').textContent = S.title || '當日行程';
@@ -106,6 +118,8 @@ function render() {
   let h = '<div class="dayline"><span>' + esc(S.date || '') + '</span>' +
     (DAY === today ? '<span class="today">今天</span>' : '') + '</div>';
 
+  h += whoisHTML();
+
   const otherDay = days.find((d) => d !== DAY);
   if (otherDay) {
     h += '<a class="other" href="today.html?day=' + esc(otherDay) + '">' +
@@ -114,6 +128,15 @@ function render() {
 
   h += (S.blocks || []).map(blockHTML).join('');
   out.innerHTML = h;
+
+  const nm = document.getElementById('notme');
+  if (nm) nm.onclick = (e) => {
+    e.preventDefault();
+    if (!confirm('要清除「我是誰」嗎？\n\n清除後要重新掃自己名牌上的 QR，'
+      + '或在表單裡手動選編號。已經送出的資料不受影響。')) return;
+    A.draft.forget();
+    render();
+  };
 }
 
 function blockHTML(b) {
@@ -135,6 +158,22 @@ function blockHTML(b) {
       (b.you ? '<div class="you">' + b.you + '</div>' : '') +
       forms +
     '</div></div>';
+}
+
+/** 「你是誰」。掃自己的名牌就會有；沒有的話要提醒他去掃，
+    因為接下來每一張表單都得先認人。 */
+function whoisHTML() {
+  const me = A.draft.identity();
+  if (!me || !me.id || !T.isKnown(me.id)) {
+    return '<div class="whois none"><span>' +
+      '<b>還不知道你是誰</b><br>請掃<strong>自己名牌上的 QR</strong>——' +
+      '或在表單裡手動選一次編號。</span></div>';
+  }
+  const nm = T.hasName(me.id) ? T.nameOf(me.id) : '';
+  return '<div class="whois"><span><span class="no">' + esc(me.id) + '</span>' +
+    (nm ? '<b>' + esc(nm) + '</b>' : '<b>（姓名尚未載入）</b>') +
+    '<br>接下來的表單都會用這個身分送出。</span>' +
+    '<a href="#" id="notme">不是我</a></div>';
 }
 
 /** 這台裝置送出過沒。只看得到自己這台的紀錄，夠用來提醒「已經交了」。 */

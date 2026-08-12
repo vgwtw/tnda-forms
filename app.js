@@ -129,7 +129,27 @@ const draft = {
     if (v) return this.set('tnda:me', v);
     return this.get('tnda:me');
   },
+  forget() { try { localStorage.removeItem('tnda:me'); } catch (e) { /* private mode */ } },
 };
+
+
+/** 網址上的 ?me=07 就是「我是誰」。
+
+    名牌上的 QR 各自帶自己的編號，掃進來就認人，不用在 38 個按鈕裡
+    找自己——**選錯人是這整套資料最難救的錯**：他填的東西會掛到別人
+    身上，兩個人的資料同時壞掉，而且不會有任何錯誤訊息。
+
+    無效的編號一律忽略（寧可退回手動選，也不要認成錯的人）。
+    回傳 true 表示這次有從網址認出身分。 */
+function claimIdentity() {
+  const id = new URLSearchParams(location.search).get('me');
+  if (!id) return false;
+  const p = T.person(id);
+  if (!p) return false;
+  const cur = draft.identity();
+  if (!cur || cur.id !== p.id) draft.identity({ id: p.id, role: p.role });
+  return true;
+}
 
 /* ── 名單 ──────────────────────────────────────────────────
    一律回傳 id，不回傳姓名。姓名只在畫面上出現，同名同姓才不會混在一起。 */
@@ -349,6 +369,6 @@ async function saveNames(map) {
 
 return { esc, guard, entryHTML, readKey, fetchAll, progressItems, progressOf, PROGRESS_LABEL,
          draft, scopeList, optionList, cardLabel, columnsOf, submit, confirmSend,
-         mountBack, formsFor, lock, syncNames, saveNames, nameNotice,
+         mountBack, formsFor, lock, syncNames, saveNames, nameNotice, claimIdentity,
          toCSV, parseCSV, download, mean, median, weighted100 };
 })();

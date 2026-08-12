@@ -29,6 +29,7 @@ const ENDPOINT = 'https://script.google.com/macros/s/AKfycbz8DHl5GENOFtvxOa8EGhU
 
    ⚠️ **這裡沒有姓名，是刻意的。** 這個 repo 是公開的，真實姓名放進來
    等於把個資放上網。姓名存在 Google 試算表的 `roster` 分頁，
+   等於把個資放上網。姓名存在 Google 試算表的 `roster` 分頁，
    由儀表板的「名單」分頁輸入，各頁載入時自動套用。
    姓名還沒載入前，畫面上一律顯示編號。
 
@@ -116,7 +117,7 @@ const MENTORS = [
    subjectFrom 指定沒有逐人區塊時，這一列的對象是誰（欄位 key）。
 */
 
-const SCALE_HINT = '1 幾乎沒有證據　2 不足　3 達入學門檻　4 清楚成立　5 可跨案例轉移';
+const SCALE_HINT = '1 不及格　2 尚有不足　3 達入學門檻　4 清楚成立　5 異常優秀';
 
 
 /* ③-a ─── 抽卡牌組 ───────────────────────────────────────────
@@ -228,8 +229,8 @@ const FORMS = {
       requires: 'willing',          // 這一格填了才算完成
       fields: [
         { k: 'willing', type: 'choice', label: '一起做？', options: [
-          { v: 'Y', label: '想一起做', hint: '我願意和他同組' },
-          { v: 'N', label: '目前不想', hint: '不是否定他，只是現在沒有訊號' },
+          { v: 'Y', label: '想合作', hint: '我願意和他同組' },
+          { v: 'N', label: '目前不想', hint: '目前沒有同組意願' },
         ] },
         { k: 'reasons', type: 'chips', label: '主要理由', max: 2, options: [
           { v: 'A', label: '專業能力',        positive: true  },
@@ -238,8 +239,8 @@ const FORMS = {
           { v: 'D', label: '作品方向',        positive: true  },
           { v: 'E', label: '表達溝通',        positive: true  },
           { v: 'F', label: '感覺能互補',      positive: true  },
-          { v: 'G', label: '尚未看見足夠證據', positive: false },
-          { v: 'H', label: '方向不相符',      positive: false },
+          { v: 'G', label: '看不出個人能力', positive: false },
+          { v: 'H', label: '方向和自己不相符',      positive: false },
         ] },
         { k: 'highlight', type: 'text', label: '一句亮點（選填）', max: 40,
           placeholder: '他讓我印象最深的一件事…',
@@ -257,9 +258,8 @@ const FORMS = {
     eyebrow: 'DAY 1 · TEAM PICK',
     title: '選兩位最想同組的人',
     brief:
-      '想一整天下來，<strong>你最想跟誰一起解題</strong>？選兩位，不分順序。' +
-      '互相選到就直接成一組；沒配到的由主辦看同儕評價單的合作意願幫忙編。' +
-      '這張<strong>不計入錄取分數</strong>，也不會公布誰選了誰。',
+      '想一整天下來，<strong>你最想跟誰一起合作</strong>？選兩位，不分順序。' +
+      '這張<strong>不計入錄取分數</strong>。',
     self: {
       fields: [
         { k: 'choice', type: 'pick', label: '第一位', optionsFrom: 'students-except-me',
@@ -293,9 +293,9 @@ const FORMS = {
         { k: 'd_self',   type: 'scale', label: '自我認知與成長性', weight: 10, evidence: true },
         { k: 'd_drive',  type: 'scale', label: '熱情與投入',       weight: 10, evidence: true },
         { k: 'notes', type: 'memo', label: '追問紀錄',
-          hint: '固定追問：① 最不可被取代的核心？② 最重要的一次選擇、另一選項為何不採用？③ 什麼有證據、什麼仍是假設？' },
+          hint: '固定追問：① 最不可被取代的核心？② 最重要的一次選擇、另一選項為何不採用？' },
         { k: 'flags', type: 'chips', label: '旗標', max: 3, options: [
-          { v: 'BORDER', label: '邊界案例（需跨組對分）', positive: false },
+          { v: 'BORDER', label: '及格邊緣需討論', positive: false },
           { v: 'ATTRIB', label: '貢獻歸屬待確認',        positive: false },
           { v: 'STAR',   label: '特殊亮點',              positive: true  },
         ] },
