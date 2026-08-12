@@ -269,7 +269,7 @@ function weighted100(fields, values) {
    儀表板與現場流程頁共用這一份定義，兩邊的數字才不會兜不起來。 */
 const PROGRESS_LABEL = {
   peer1:    '同儕評價單',
-  pair1:    '選一位最想同組的人',
+  pair1:    '選兩位最想同組的人',
   self2:    '自評與團隊內互評單',
   mentor1:  '作品集答辯評分表',
   observe2: '個人過程觀察表',

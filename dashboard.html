@@ -262,7 +262,7 @@ code{background:var(--s2);color:var(--fg2)}
 </main>
 </div>
 
-<script src="config.js?v=ed70facc"></script>
+<script src="config.js?v=ef7dd231"></script>
 <script src="app.js"></script>
 <script>
 (() => {
@@ -693,26 +693,31 @@ function renderPeer() {
   const c = $('reveal'); if (c) c.onchange = () => { REVEAL = c.checked; renderPeer(); };
 }
 
-/* 17:00 分組用：先看「選一位最想同組的人」的互選，那是硬配對；
+/* 分組用：先看「選兩位最想同組的人」的互選，那是硬配對；
    同儕評價的雙向 Y 只是備援參考，因為一個人可以對很多人說 Y。 */
 function pairingHTML() {
   let h = '';
 
-  const pick = {};   // 誰選了誰
-  DATA.pair1.forEach((r) => { if (r.choice) pick[r.submitter] = r.choice; });
-  const submitted = Object.keys(pick);
-
-  const matched = [], oneWay = [];
-  submitted.forEach((a) => {
-    const b = pick[a];
-    if (pick[b] === a) { if (a < b) matched.push([a, b]); }
-    else oneWay.push([a, b]);
+  const pick = {};   // 誰選了哪兩位
+  DATA.pair1.forEach((r) => {
+    const xs = [r.choice, r.choice2].filter(Boolean);
+    if (xs.length) pick[r.submitter] = xs;
   });
-  const paired = new Set(matched.flat());
+  const submitted = Object.keys(pick);
+  const chose = (a, b) => (pick[a] || []).indexOf(b) >= 0;
+
+  /* 一個人選兩位，所以可能同時跟兩個人互選成功。照編號順序先配先贏，
+     配過的就不再參與——結果才會是穩定的，重跑一次不會換一組人。 */
+  const matched = [], paired = new Set();
+  submitted.slice().sort().forEach((a) => {
+    if (paired.has(a)) return;
+    const b = (pick[a] || []).find((x) => !paired.has(x) && x !== a && chose(x, a));
+    if (b) { matched.push([a, b]); paired.add(a); paired.add(b); }
+  });
   const unpaired = T.allStudentIds().filter((id) => !paired.has(id));
 
   h += '<h2 class="sec">互選成功　' + matched.length + ' 對</h2>' +
-    '<p class="lede">兩個人互相選到對方，直接成組。' +
+    '<p class="lede">兩個人互相把對方選進自己的兩位裡，直接成組。' +
     '已交 <b>' + submitted.length + '</b> / ' + T.allStudentIds().length + ' 人。</p>' +
     (matched.length
       ? '<div class="card"><div class="grid g3">' + matched.map(([a, b]) =>
@@ -720,29 +725,33 @@ function pairingHTML() {
           esc(T.labelOf(a)) + '　⇄　' + esc(T.labelOf(b)) + '</div>').join('') + '</div></div>'
       : '<div class="card"><span class="sub">還沒有互選成功的配對。</span></div>');
 
-  // 被幾個人選為第一志願——單向選擇不另開一區，併進這裡當一欄，
-  // 否則 30 個人每人一格會排掉整個螢幕。
+  // 被幾個人選到（兩個位子都算）。單向選擇不另開一區，併進下表當一欄，
+  // 否則每人一格會排掉整個螢幕。
   const nominated = {};
-  submitted.forEach((a) => { nominated[pick[a]] = (nominated[pick[a]] || 0) + 1; });
+  submitted.forEach((a) => {
+    (pick[a] || []).forEach((b) => { nominated[b] = (nominated[b] || 0) + 1; });
+  });
 
   h += '<h2 class="sec">還沒配到　' + unpaired.length + ' 人</h2>' +
-    '<p class="lede">這些人要現場自行找人湊滿三人。' +
+    '<p class="lede">這些人由主辦幫忙編組。' +
     '「他選了誰」旁邊是對方目前的狀態，湊組時可以參考——<b>不要在台上唸出來</b>。' +
     '「被選次數」高又還沒配到的人，通常是最好牽線的對象。</p>' +
     '<div class="scroll"><table><thead><tr><th>編號／姓名</th>' +
-    '<th class="num">被選次數</th><th>他選了誰</th><th>對方的狀態</th><th>理由</th>' +
+    '<th class="num">被選次數</th><th>他選的兩位</th><th>那兩位的狀態</th><th>理由</th>' +
     '</tr></thead><tbody>' +
     unpaired.map((id) => {
-      const target = pick[id];
+      const targets = pick[id] || [];
       const why = (DATA.pair1.find((r) => r.submitter === id) || {}).why || '';
-      const state = !target ? '—'
-        : paired.has(target) ? '已跟別人配對'
-        : pick[target] ? '選了 ' + T.labelOf(pick[target])
-        : '還沒交';
+      const stateOf = (t) => paired.has(t) ? '已配對'
+        : !pick[t] ? '還沒交'
+        : chose(t, id) ? '也選了他' : '可以牽線';
       return '<tr><td>' + idTag(id) + '<b>' + esc(T.nameOf(id)) + '</b></td>' +
         '<td class="num">' + (nominated[id] || 0) + '</td>' +
-        '<td>' + (target ? esc(T.labelOf(target)) : '<i style="color:var(--fg3)">未交</i>') + '</td>' +
-        '<td>' + esc(state) + '</td>' +
+        '<td>' + (targets.length
+          ? targets.map((t) => esc(T.labelOf(t))).join('<br>')
+          : '<i style="color:var(--fg3)">未交</i>') + '</td>' +
+        '<td style="font-size:12.5px">' +
+          targets.map(stateOf).map(esc).join('<br>') + '</td>' +
         '<td style="font-size:12.5px">' + esc(why) + '</td></tr>';
     }).join('') + '</tbody></table></div>';
 
@@ -998,7 +1007,7 @@ function renderStatus() {
   // 收齊的定義寫在 app.js 的 progressItems，現場流程頁用的是同一份，
   // 兩邊的數字才不會兜不起來。
   [['peer1', 'D1 同儕評價單（學員）'],
-   ['pair1', 'D1 選一位最想同組的人（學員，17:00）'],
+   ['pair1', 'D1 選兩位最想同組的人（學員，最後一段）'],
    ['mentor1', 'D1 作品集答辯評分表（每位候選人）'],
    ['observe2', 'D2 個人過程觀察表（每組每時段）'],
    ['team2', 'D2 業師回饋單（每組每題）'],
@@ -1252,7 +1261,9 @@ $('btn-demo').onclick = () => {
     const idx = T.allStudentIds().indexOf(id);
     const partner = idx < 12 ? T.allStudentIds()[idx % 2 === 0 ? idx + 1 : idx - 1] : pick(pool);
     d.pair1.push(named({ form: 'pair1', submitter: id, subject: id, rel: '',
-      choice: partner, why: rnd() < .4 ? pick(EV) : '' }));
+      choice: partner,
+      choice2: pick(T.allStudentIds().filter((x) => x !== id && x !== partner)),
+      why: rnd() < .4 ? pick(EV) : '' }));
   });
   // mentor1（兩位業師各評一半，少數重疊）
   T.allStudentIds().forEach((id, i) => {

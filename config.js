@@ -248,24 +248,26 @@ const FORMS = {
     },
   },
 
-  /* ── Day1 · 選一位最想同組的人（學員填，0%，17:00 分組用） ──
+  /* ── Day1 · 選兩位最想同組的人（學員填，0%，17:00 分組用） ──
      跟同儕評價單是兩回事：同儕評價是對每個人各給一次「想／不想」，
      一個人可以對全部 14 位都說想；這一張是<strong>只能挑一位</strong>，
      用來做互選配對。兩邊都不計入錄取分數。 */
   pair1: {
     day: 1, role: 'student', weightLabel: '分組用',
     eyebrow: 'DAY 1 · TEAM PICK',
-    title: '選一位最想同組的人',
+    title: '選兩位最想同組的人',
     brief:
-      '想一整天下來，<strong>你最想跟誰一起解題</strong>？只能選一位。' +
-      '兩個人互相選到就直接成一組，沒配到的等一下自行找人。' +
+      '想一整天下來，<strong>你最想跟誰一起解題</strong>？選兩位，不分順序。' +
+      '互相選到就直接成一組；沒配到的由主辦看同儕評價單的合作意願幫忙編。' +
       '這張<strong>不計入錄取分數</strong>，也不會公布誰選了誰。',
     self: {
       fields: [
-        { k: 'choice', type: 'pick', label: '我最想同組的是', optionsFrom: 'students-except-me',
+        { k: 'choice', type: 'pick', label: '第一位', optionsFrom: 'students-except-me',
+          required: true },
+        { k: 'choice2', type: 'pick', label: '第二位', optionsFrom: 'students-except-me',
           required: true },
         { k: 'why', type: 'text', label: '一句話說為什麼（選填）', max: 40,
-          placeholder: '今天看到他什麼讓你想找他…' },
+          placeholder: '今天看到他們什麼讓你想找…' },
       ],
     },
   },
@@ -459,7 +461,7 @@ const SCHEDULE = {
         forms: ['mentor1', 'peer1'] },
       { from: '17:10', to: '17:30', label: 'Day 2 行前分組',
         note: '配對 Day 2 分組',
-        you: '填「選一位最想同組的人」——只能選一位',
+        you: '填「選兩位最想同組的人」——選兩位',
         todo: ['當面發個人回饋摘要'],
         forms: ['pair1'] },
     ],
@@ -484,39 +486,38 @@ const SCHEDULE = {
         todo: ['巡迴觀察', '結束前填完觀察表（段次：第一段）'],
         forms: ['observe2'] },
 
-      { from: '11:55', to: '12:15', label: '第一段桌邊說明',
-        note: '不上台，業師走到桌邊聽，每組約 90 秒',
-        you: '向業師口述：為誰做、想讓玩家體驗什麼、為什麼是這幾招',
-        todo: ['每組聽完當場填回饋單（段次：第一段）'],
-        forms: ['team2'] },
+      { from: '11:55', to: '12:05', label: '業師收尾',
+        note: '第一段的觀察表與回饋單，趁記憶還熱的時候填完',
+        todo: ['填完第一段的觀察表與業師回饋單（段次：第一段）'],
+        forms: ['observe2', 'team2'] },
 
-      { from: '12:15', to: '13:15', label: '午休',
+      { from: '12:05', to: '13:05', label: '午休',
         note: '自理',
         todo: ['補完還沒送出的表單'] },
 
-      { from: '13:15', to: '14:00', label: '業師展演：frame 與風險報酬', key: true,
+      { from: '13:05', to: '13:50', label: '業師展演：frame 與風險報酬', key: true,
         note: '不評分',
         you: '看展演、有問題就問',
         todo: ['實機展演：起手、確反、被防住的代價、風險報酬', '結束時發進階條件卡'] },
 
-      { from: '14:00', to: '15:30', label: '第二段衝刺', key: true,
+      { from: '13:50', to: '15:20', label: '第二段衝刺', key: true,
         note: '同一個角色，加入抽到的進階條件卡',
         you: '把第一段的設計往下推，不是重來',
         todo: ['巡迴觀察', '結束前填完觀察表（段次：第二段）'],
         forms: ['observe2'] },
 
-      { from: '15:30', to: '16:35', label: '第二段發表＋講評',
+      { from: '15:20', to: '16:25', label: '第二段發表＋講評',
         note: '13 組，每組約 5 分',
         you: '交 movelist ＋一頁理由，說明第二段改了什麼',
         todo: ['每組講評完填回饋單（段次：第二段）'],
         forms: ['team2'] },
 
-      { from: '16:35', to: '16:50', label: '團隊內互評、業師合議',
+      { from: '16:25', to: '16:40', label: '團隊內互評、業師合議',
         you: '填自評與團隊內互評單，寫具體事例',
         todo: ['對照自評與隊友評的落差'],
         forms: ['self2'] },
 
-      { from: '16:50', to: '17:00', label: '結果講評與課程預告',
+      { from: '16:40', to: '17:00', label: '結果講評與課程預告',
         note: 'UE5 單機 3D 格鬥程式課' },
     ],
   },
