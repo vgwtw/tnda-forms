@@ -120,99 +120,17 @@ const MENTORS = [
 const SCALE_HINT = '1 不及格　2 尚有不足　3 達入學門檻　4 清楚成立　5 異常優秀';
 
 
-/* ③-a ─── 抽卡牌組 ───────────────────────────────────────────
-   內容對齊「Day2 抽卡牌組」那份印刷檔，代號也一致（A／M／S／I）。
-   業師填業師回饋單時從清單挑，不用手打，統計時才對得起來。
-   紙本牌組有 A11／A12、S11／S12 兩張自訂卡——真的用到就照樣加一行。 */
+/* ③-a ─── Day2 的題目 ─────────────────────────────────────────
+   最終版是**定題**，不抽卡：《新鬥士參戰》——選一名原本不是
+   戰鬥角色的角色，重新設計成可加入《任天堂明星大亂鬥》的新鬥士。
+   來源角色由各組自選，所以沒有牌組要維護；舊的抽卡牌組
+   （角色原型／進階條件／招式限制／場景／互動）要找請翻 git 歷史。
 
-const CARDS = {
-  /* 第一段：角色原型卡 抽 1。題目到此為止，不給規格——
-     「幾招、要不要分類、怎麼說明」正是要他們自己拆解出來的。 */
-  archetype: [
-    { v: 'A01', label: '近身壓制　PRESSURE' },
-    { v: 'A02', label: '遠程牽制　ZONING' },
-    { v: 'A03', label: '投技猜拳　GRAPPLER' },
-    { v: 'A04', label: '充能爆發　CHARGE' },
-    { v: 'A05', label: '反擊型　COUNTER' },
-    { v: 'A06', label: '召喚協同　SUMMONER' },
-    { v: 'A07', label: '以速度取勝　SPEED' },
-    { v: 'A08', label: '以體型取勝　SIZE' },
-    { v: 'A09', label: '讀心博弈　MIND GAME' },
-    { v: 'A10', label: '資源管理　RESOURCE' },
-    { v: 'A11', label: '型態切換　STANCE' },
-    { v: 'A12', label: '陷阱設置　TRAP' },
-    { v: 'A13', label: '位移特化　MOBILITY' },
-  ],
-  /* 第二段：進階條件卡 抽 1。都是 frame 與風險報酬的具體切面，
-     業師展演完才發，讓不懂格鬥的人也接得住。 */
-  advanced: [
-    { v: 'X01', label: '有一招起手很慢，但命中報酬極高' },
-    { v: 'X02', label: '有一招是確反專用：安全但報酬低' },
-    { v: 'X03', label: '必須有明確的確反視窗——被防住要付代價' },
-    { v: 'X04', label: '有一招的風險由自己承擔，失敗會反噬' },
-    { v: 'X05', label: '有一招消耗資源，且資源要讓對手看得見' },
-    { v: 'X06', label: '有一招被打斷時，代價大於收益' },
-    { v: 'X07', label: '要有一組相剋關係：這招怕那招' },
-    { v: 'X08', label: '有一招的收益隨距離或時機改變' },
-    { v: 'X09', label: '有一招是假動作，用來騙對手的防禦選擇' },
-    { v: 'X10', label: '有一招在血量低時性能改變' },
-    { v: 'X11', label: '至少一招要說得出 startup／active／recovery' },
-    { v: 'X12', label: '有一招會讓對手也拿到某種好處' },
-    { v: 'X13', label: '有一招只有在讀對對手意圖時才成立' },
-  ],
-
-  /* 以下三副是雙題版留下來的，單一主題兩段式用不到，先留著不刪。
-     要改回雙題再把它們接上 team2 的 head 即可。 */
-  moveLimit: [
-    { v: 'M01', label: '招式上限 5 招，需涵蓋攻／防／位移' },
-    { v: 'M02', label: '必須有一招高風險高報酬' },
-    { v: 'M03', label: '只能有一招遠程牽制' },
-    { v: 'M04', label: '必須有明確的確反視窗' },
-    { v: 'M05', label: '有一招會改變自身狀態' },
-    { v: 'M06', label: '不能有投技' },
-    { v: 'M07', label: '一個招式性能隨連段數變化' },
-    { v: 'M08', label: '必須有假動作／取消機制' },
-    { v: 'M09', label: '沒有必殺，只靠普通招的深度' },
-    { v: 'M10', label: '一招需消耗共用資源' },
-    { v: 'M11', label: '有一招起手很慢但獎勵很大' },
-    { v: 'M12', label: '有一招利用位置才成立' },
-  ],
-  /* 下午題：場景卡 抽 1 */
-  stage: [
-    { v: 'S01', label: '末日溫室　DOOMSDAY GREENHOUSE' },
-    { v: 'S02', label: '霓虹夜市　NEON NIGHT MARKET' },
-    { v: 'S03', label: '高速鐵道　BULLET TRAIN' },
-    { v: 'S04', label: '廢棄遊樂園　ABANDONED FUNFAIR' },
-    { v: 'S05', label: '深海郵局　DEEP-SEA POST OFFICE' },
-    { v: 'S06', label: '祭典遶境　TEMPLE PARADE' },
-    { v: 'S07', label: '水墨留白　INK & VOID' },
-    { v: 'S08', label: '故障數位　GLITCH' },
-    { v: 'S09', label: '重金屬舞台　METAL STAGE' },
-    { v: 'S10', label: '微觀戰場　MICRO BATTLEFIELD' },
-  ],
-  /* 下午題：互動限制卡 抽 1 */
-  interaction: [
-    { v: 'I01', label: '至少一個互動要能直接影響勝負' },
-    { v: 'I02', label: '互動不能造成直接傷害' },
-    { v: 'I03', label: '必須利用場景高低差' },
-    { v: 'I04', label: '一個互動每局只能觸發一次' },
-    { v: 'I05', label: '互動需兩名玩家爭奪' },
-    { v: 'I06', label: '場景有一個隨時間變化的元素' },
-    { v: 'I07', label: '可破壞物，破壞後永久改變戰場' },
-    { v: 'I08', label: '互動要能被雙方公平使用' },
-    { v: 'I09', label: '有一個互動是風險誘餌' },
-    { v: 'I10', label: '場景邊界本身要有機制' },
-    { v: 'I11', label: '一個互動改變鏡頭／視野或資訊' },
-    { v: 'I12', label: '互動要呼應場景主題敘事' },
-  ],
-};
-
-/* Day2 是「單一主題、兩段推進」：同一個角色做到底。
-   第一段開放式，規格由學員自己拆解出來；第二段才加入 frame 與
-   風險報酬這類格鬥本質的條件——非格鬥玩家通常不懂，所以中間
-   安排業師展演與拆解，讓他們先看得懂再設計。 */
-const ROUND_1 = '第一段 · 概念與 movelist';
-const ROUND_2 = '第二段 · 加入 frame 與風險報酬';
+   評鑑改成 Process-based：三個 Decision Gate 是觀察窗口，
+   學員只知道 Gate 的時間，不預先知道 Gate 的內容與 Challenge——
+   所以 SCHEDULE 裡 Gate 的 label／note／you（學員看得到）只寫
+   「階段 Review」，內容細節一律放 todo（只有業師與主辦看得到）。 */
+const CARDS = {};
 
 const FORMS = {
 
@@ -303,55 +221,64 @@ const FORMS = {
     },
   },
 
-  /* ── Day2 · 個人解題過程觀察表（業師填，30%） ──────────── */
+  /* ── Day2 · 個人解題過程觀察表（業師填，30%） ────────────
+     六個 Lens 對齊 Reviewer Brief：READ／DECONSTRUCT／DIVERGE／
+     DECIDE／COLLABORATE／ADAPT。上午（探索＋GATE 01）與下午
+     （發展＋GATE 02、03）各交一張，同一人多張、多位觀察者取平均。 */
   observe2: {
     day: 2, role: 'mentor', weightLabel: '30%　主要訊號',
     eyebrow: 'DAY 2 · PROCESS OBSERVATION',
     title: '個人解題過程觀察表',
-    brief: '看的是<strong>過程</strong>不是成果。各項 1–5',
+    brief: '看的是<strong>過程</strong>不是成果。各項 1–5，' +
+      '優先記 Behavioral Evidence，不記「有想法、表現好」這種印象',
     head: [
       { k: 'team', type: 'pick', label: '組別', optionsFrom: 'd2-teams', required: true, key: true },
-      { k: 'slot', type: 'pick', label: '段次', options: ['第一段', '第二段'], required: true, key: true },
+      { k: 'slot', type: 'pick', label: '時段', options: ['上午', '下午'], required: true, key: true,
+        hint: '上午＝自由探索＋GATE 01；下午＝方案發展＋GATE 02、03' },
     ],
     per: {
       scope: 'd2-members',
-      requires: 'o_break',
+      requires: 'o_read',
       fields: [
-        { k: 'o_break', type: 'scale', label: '拆題與切入',       weight: 20, hint: '如何理解題目與限制、從哪裡下手' },
-        { k: 'o_adapt', type: 'scale', label: '限制應變與取捨',   weight: 20, hint: '面對隨機限制卡的變通與理由' },
-        { k: 'o_ai',    type: 'scale', label: 'AI 運用與驗證',     weight: 20, hint: '是否理解與驗證產出，而非照抄' },
-        { k: 'o_team',  type: 'scale', label: '團隊推進與協作',   weight: 20, hint: '誰主動推進、分工整合、衝突處理' },
-        { k: 'o_iter',  type: 'scale', label: '迭代與現場修正',   weight: 20, hint: '收到回饋或卡關時的應變速度' },
+        { k: 'o_read',   type: 'scale', label: '讀題與理解　READ',        weight: 15, hint: '怎麼理解題目與限制、有沒有回到來源素材查證' },
+        { k: 'o_decon',  type: 'scale', label: '解構與研究　DECONSTRUCT', weight: 15, hint: '能不能拆出角色的行為本質，而不是停在表面印象' },
+        { k: 'o_diverge', type: 'scale', label: '發散與開放　DIVERGE',    weight: 15, hint: '能不能離開第一個 idea，提出實質不同的方向' },
+        { k: 'o_decide', type: 'scale', label: '選擇與判斷　DECIDE',      weight: 20, hint: '選擇有沒有 criterion 與 Evidence，說不說得出取捨' },
+        { k: 'o_collab', type: 'scale', label: '協作與推進　COLLABORATE', weight: 20, hint: '誰推進、分歧怎麼整合；不是三人各做各的生產分工' },
+        { k: 'o_adapt',  type: 'scale', label: '修正與應變　ADAPT',       weight: 15, hint: '被 Gate／Challenge 之後，是保護原案還是重新檢查判斷' },
         { k: 'behaviour', type: 'memo', label: '具體事例',
           hint: '誰、做了什麼、什麼時候。不要寫形容詞。' },
       ],
     },
   },
 
-  /* ── Day2 · 業師回饋單（業師填，15%，團隊成果） ────────── */
+  /* ── Day2 · 業師回饋單（業師填，15%，團隊成果） ──────────
+     一組一張，Final Proposal 講評時填。Final Outcome 只是 Evidence
+     的一部分——形成答案的過程走 observe2，這張只評最終提案本身。
+     面向對齊題目：SOURCE CHARACTER → ESSENCE → PLAYER ACTION →
+     FIGHTING LANGUAGE。 */
   team2: {
     day: 2, role: 'mentor', weightLabel: '15%',
     eyebrow: 'DAY 2 · TEAM OUTPUT',
     title: '業師回饋單',
-    brief: '每組每段一張。團隊成果佔總分 15%，兩段平均後套用到組內每一位成員。',
+    brief: '每組一張，Final Proposal 講評時填。' +
+      '團隊成果佔總分 15%，分數套用到組內每一位成員。',
     subjectFrom: 'team',
     head: [
-      { k: 'team',  type: 'pick', label: '組別', optionsFrom: 'd2-teams', required: true, key: true },
-      { k: 'round', type: 'pick', label: '段次', required: true, key: true,
-        options: [ROUND_1, ROUND_2] },
-      // 角色卡兩段都要記（同一個角色做到底）；進階條件卡只有第二段有。
-      { k: 'card_archetype', type: 'pick', label: '抽到的角色原型卡',
-        optionsFrom: 'cards:archetype' },
-      { k: 'card_advanced', type: 'pick', label: '抽到的進階條件卡',
-        optionsFrom: 'cards:advanced', showIf: { round: ROUND_2 } },
+      { k: 'team', type: 'pick', label: '組別', optionsFrom: 'd2-teams', required: true, key: true },
+      { k: 'character', type: 'text', label: '來源角色', max: 40,
+        placeholder: '他們選了誰來參戰…', hint: '各組自選，照他們的說法記，統計時看得懂就好。' },
     ],
     self: {
       fields: [
-        { k: 't_creative', type: 'scale', label: '設計創意與獨特性', weight: 30, evidence: true, hint: '能否跳出既有框架' },
-        { k: 't_system',   type: 'scale', label: '機制合理與可行',   weight: 30, evidence: true,
-          hint: '第一段看攻防關係說不說得通；第二段才要求 frame 與風險報酬' },
-        { k: 't_goal',     type: 'scale', label: '體驗目標清晰',     weight: 25, evidence: true, hint: '想讓玩家感受什麼，並扣回限制' },
-        { k: 't_finish',   type: 'scale', label: '完成度與呈現',     weight: 15, evidence: true, hint: '產出完整、表達清楚、時間掌控' },
+        { k: 't_essence',  type: 'scale', label: '角色本質的掌握',   weight: 30, evidence: true,
+          hint: '有沒有抓到來源角色的行為本質，而不是表面換皮' },
+        { k: 't_action',   type: 'scale', label: '概念轉成玩家操作', weight: 30, evidence: true,
+          hint: '本質有沒有變成說得通的操作與戰鬥語言，攻防關係成不成立' },
+        { k: 't_tradeoff', type: 'scale', label: '取捨與決策依據',   weight: 25, evidence: true,
+          hint: '說不說得出保留、刪除與犧牲的理由；比較過哪些方向' },
+        { k: 't_finish',   type: 'scale', label: '提案完成度與呈現', weight: 15, evidence: true,
+          hint: 'Evidence 齊全、表達清楚、時間掌控' },
         { k: 'strength', type: 'memo', label: '亮點' },
         { k: 'gap',      type: 'memo', label: '主要問題' },
         { k: 'next',     type: 'memo', label: '若多兩小時，先改什麼', accent: true },
@@ -468,57 +395,75 @@ const SCHEDULE = {
   },
   2: {
     date: '2026-08-15',
-    title: '最多 3 人一組現場解題',
+    title: '現場合作設計評鑑',
+    /* Process-based：三個 Gate 是觀察窗口。學員只知道 Gate 的時間，
+       不預先知道內容——Gate 的細節只能寫在 todo，不要寫進 label／note／you。
+       每組固定兩位 Assigned Reviewers，Gate 01 與 Gate 03 由不同人主問；
+       分工表在《Reviewer Brief》，開場前發給四位評審。 */
     blocks: [
-      { from: '10:00', to: '10:15', label: '暖身、分組、規則公開',
-        note: '單一主題、兩段推進',
-        you: '重新整理頁面，看你的新組別',
-        todo: ['選好自己是誰'] },
+      { from: '10:00', to: '10:20', label: 'Briefing｜開場說明',
+        note: '公布題目、規則與評鑑原則；三個 Gate 的時間公開，內容到時候才知道',
+        you: '重新整理頁面看你的新組別；掃名牌 QR 認好自己',
+        todo: ['公布題目《新鬥士參戰》與活動規則',
+               '只公開 Gate 時間，不預告 Gate 內容與 Challenge'] },
 
-      { from: '10:15', to: '10:25', label: '讀題與拆解',
-        note: '各組抽一張角色原型卡',
-        you: '讀題。規格自己定義，不要問「要幾招」',
-        todo: ['監督抽卡'] },
+      { from: '10:20', to: '11:30', label: 'Open Explore｜自由探索', key: true,
+        note: '怎麼讀題、調查、討論、分工，由團隊自己決定',
+        you: '沒有標準流程。怎麼理解題目、查什麼、從哪裡開始，都是你們的判斷',
+        todo: ['第一輪巡組：只觀察不指導，記具體行為不記印象',
+               '看 READ／DECONSTRUCT：怎麼讀題、有沒有回到來源素材查證'] },
 
-      { from: '10:25', to: '11:55', label: '第一段衝刺', key: true,
-        note: '為這個角色設計一套 movelist',
-        you: '讀題 → 拆解 → 調查 → 設計。保留 AI 的 prompt',
-        todo: ['巡迴觀察', '結束前填完觀察表（段次：第一段）'],
-        forms: ['observe2'] },
+      { from: '11:30', to: '12:00', label: 'GATE 01｜階段 Review', key: true,
+        note: '各組輪流接受第一次階段 Review',
+        you: '輪到你們時，說明目前的理解與依據',
+        todo: ['Gate 01 主問（照分工表）：真正要解決的是什麼？判斷建立在哪些 Evidence 上？',
+               '確認三個人是不是在處理同一件事'] },
 
-      { from: '11:55', to: '12:05', label: '業師收尾',
-        note: '第一段的觀察表與回饋單，趁記憶還熱的時候填完',
-        todo: ['填完第一段的觀察表與業師回饋單（段次：第一段）'],
-        forms: ['observe2', 'team2'] },
-
-      { from: '12:05', to: '13:05', label: '午休',
+      { from: '12:00', to: '13:00', label: '午休',
         note: '自理',
-        todo: ['補完還沒送出的表單'] },
-
-      { from: '13:05', to: '13:50', label: '業師展演：frame 與風險報酬', key: true,
-        note: '不評分',
-        you: '看展演、有問題就問',
-        todo: ['實機展演：起手、確反、被防住的代價、風險報酬', '結束時發進階條件卡'] },
-
-      { from: '13:50', to: '15:20', label: '第二段衝刺', key: true,
-        note: '同一個角色，加入抽到的進階條件卡',
-        you: '把第一段的設計往下推，不是重來',
-        todo: ['巡迴觀察', '結束前填完觀察表（段次：第二段）'],
+        you: '下午從方案發展繼續',
+        todo: ['交換上午觀察：標記值得追蹤、與還沒被充分看見的學生',
+               '把上午的觀察表填完（時段：上午）'],
         forms: ['observe2'] },
 
-      { from: '15:20', to: '16:25', label: '第二段發表＋講評',
-        note: '13 組，每組約 5 分',
-        you: '交 movelist ＋一頁理由，說明第二段改了什麼',
-        todo: ['每組講評完填回饋單（段次：第二段）'],
-        forms: ['team2'] },
+      { from: '13:00', to: '14:00', label: 'Open Develop｜方案發展', key: true,
+        note: '延續研究、修正方向並發展設計',
+        you: '把上午的理解變成方案；方向可以修，理由要說得出來',
+        todo: ['第二輪巡組：Gate 01 之後有沒有實質改變',
+               '看 DIVERGE：是不是黏在第一個 idea 上'] },
 
-      { from: '16:25', to: '16:40', label: '團隊內互評、業師合議',
-        you: '填自評與團隊內互評單，寫具體事例',
-        todo: ['對照自評與隊友評的落差'],
-        forms: ['self2'] },
+      { from: '14:00', to: '14:10', label: 'GATE 02｜全體公告',
+        note: '全體暫停，公布一個新的 Requirement',
+        you: '聽現場宣布',
+        todo: ['公布：進入最終設計前，要留下至少三個認真考慮過、具實質差異的方向',
+               '公布後不解釋作法，讓團隊自己決定怎麼滿足'] },
 
-      { from: '16:40', to: '17:00', label: '結果講評與課程預告',
-        note: 'UE5 單機 3D 格鬥程式課' },
+      { from: '14:10', to: '15:00', label: 'Decide & Design｜選擇與深化', key: true,
+        note: '比較方向、做出選擇、把設計做深',
+        you: '為什麼選 A 不選 B？把理由講得出來，再往下做',
+        todo: ['觀察 Decision 的 moment：誰提出 criterion、Evidence 有沒有影響選擇',
+               '看 DECIDE／COLLABORATE：選擇怎麼形成、分歧怎麼整合'] },
+
+      { from: '15:00', to: '15:30', label: 'GATE 03｜階段 Review', key: true,
+        note: '各組接受第二次階段 Review',
+        you: '輪到你們時，說明目前的方案與依據',
+        todo: ['由另一位 Assigned Reviewer 主問（與 Gate 01 不同人），Challenge 核心假設',
+               '看 ADAPT：被挑戰後是保護 idea，還是重新檢查判斷'] },
+
+      { from: '15:30', to: '16:00', label: 'Finalize｜整理與收斂',
+        note: '整理手上的材料，準備最終提案',
+        you: '研究、草圖、比較過的方向都是你們的 Evidence，不用藏',
+        todo: ['停止巡組。評審交換 Evidence，標記觀察證據還不足的學生',
+               '把下午的觀察表填完（時段：下午）'],
+        forms: ['observe2'] },
+
+      { from: '16:00', to: '17:00', label: 'Final Proposal｜最終提案', key: true,
+        note: '呈現形式現場宣布',
+        you: '依現場宣布的形式提案；輪空時填自評與團隊內互評單',
+        todo: ['形式依評審會議決定，現場宣布',
+               '每組講評完填業師回饋單',
+               '對觀察證據不足的學生，優先指定發言或答辯'],
+        forms: ['team2', 'self2'] },
     ],
   },
 };

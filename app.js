@@ -31,8 +31,8 @@ const ENTRY_DESC = {
   peer1:    '每位同學發表後填一列。匿名，不計入錄取分數。',
   self2:    '每人一張。先自評，再評隊友，寫具體事例。',
   mentor1:  '每位候選人一張。六個面向 1–5 分，每分都要有證據。',
-  observe2: '每組每時段一張，逐人記錄。看過程不看成果。',
-  team2:    '每組每題一張。兩題平均後套用到組內每一位。',
+  observe2: '每組上下午各一張，逐人記錄六個 Lens。看過程不看成果。',
+  team2:    '每組一張，Final Proposal 講評時填。分數套用到組內每一位。',
 };
 
 function entryHTML(role) {
@@ -309,19 +309,17 @@ function progressItems(formId, rows) {
     return T.allStudentIds().map((id) => ({ id, label: id + '　' + T.nameOf(id), ok: done.has(id) }));
   }
   if (formId === 'observe2') {
+    // 時段清單直接讀 config 的選項，改成三段制也不用回來動這裡。
+    const slots = (T.FORMS.observe2.head.find((f) => f.k === 'slot') || {}).options || [];
     const done = new Set(rows.map((r) => r.team + '｜' + r.slot));
     const out = [];
-    T.d2Teams().forEach((t) => ['上午', '下午'].forEach((s) => out.push(has(done, t + '｜' + s))));
+    T.d2Teams().forEach((t) => slots.forEach((s) => out.push(has(done, t + '｜' + s))));
     return out.map((o) => ({ label: o.label.replace('｜', ' '), ok: o.ok }));
   }
   if (formId === 'team2') {
-    const done = new Set(rows.map((r) => r.subject + '｜' + r.round));
-    const rounds = T.FORMS.team2.head.find((f) => f.k === 'round').options;
-    const out = [];
-    T.d2Teams().forEach((t) => rounds.forEach((r) => out.push({
-      label: t + ' ' + r.replace(/ ·.*/, ''), ok: done.has(t + '｜' + r),
-    })));
-    return out;
+    // 一組一張（Final Proposal 講評時填）。
+    const done = new Set(rows.map((r) => r.subject));
+    return T.d2Teams().map((t) => ({ label: t, ok: done.has(t) }));
   }
   return [];
 }

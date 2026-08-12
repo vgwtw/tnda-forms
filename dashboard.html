@@ -262,8 +262,8 @@ code{background:var(--s2);color:var(--fg2)}
 </main>
 </div>
 
-<script src="config.js?v=20f6998d"></script>
-<script src="app.js?v=06e123e4"></script>
+<script src="config.js?v=21024240"></script>
+<script src="app.js?v=8aed0e3e"></script>
 <script>
 (() => {
 'use strict';
@@ -363,13 +363,13 @@ function computeAll() {
     }));
   });
 
-  // D2 團隊成果：subject = 組別，兩題平均後套用到組內每一位
+  // D2 團隊成果：subject = 組別，Final Proposal 一組一張，套用到組內每一位。
+  // 兩位 Assigned Reviewers 都填的話（一組多列）取平均。
   const teamScore = {};
   Object.entries(groupBy(DATA.team2, (r) => r.subject)).forEach(([team, rows]) => {
     const scores = rows.map((r) => rowScore('team2', r)).filter((x) => x != null);
     teamScore[team] = {
       score: A.mean(scores), n: scores.length,
-      byRound: groupBy(rows, (r) => r.round),
       next: rows.map((r) => r.next).filter(Boolean),
       strength: rows.map((r) => r.strength).filter(Boolean),
       gap: rows.map((r) => r.gap).filter(Boolean),
@@ -600,12 +600,6 @@ function scoreTableHTML(list) {
 
 const FLAG_LABEL = { BORDER: '邊界案例', ATTRIB: '貢獻歸屬待確認', STAR: '特殊亮點' };
 
-/** 一列業師回饋單抽到的卡：角色卡兩段都記，進階條件卡只有第二段有。 */
-function cardsOf(r) {
-  return ['card_archetype', 'card_advanced']
-    .map((k) => r[k]).filter(Boolean)
-    .map((code) => esc(A.cardLabel(code))).join('<br>') || '—';
-}
 function scoreRow(x) {
   return '<tr class="' + (x.flags.length ? 'flagged' : '') + '">' +
     '<td>' + idTag(x.id) + '<b>' + esc(x.name) + '</b></td>' +
@@ -804,24 +798,22 @@ function renderDay2() {
     const teams = Object.keys(teamScore).sort();
     const max = 100;
     h += '<h2 class="sec">團隊成果（15%）</h2>' +
-      '<p class="lede">兩題（上午角色招式 / 下午場景互動）平均後，套用到組內每一位成員。' +
-      '同一組的成員這一項分數相同。</p>' +
+      '<p class="lede">Final Proposal 一組一張，套用到組內每一位成員；' +
+      '同一組的成員這一項分數相同。兩位 Assigned Reviewers 都填的話取平均。</p>' +
       '<div class="card"><div class="bars">' +
       teams.map((t) => barRow(t + '　' + T.teamMembers(t).map(T.labelOf).join('、'),
         (teamScore[t].score || 0) / max, n1(teamScore[t].score),
         'acc')).join('') + '</div></div>';
 
-    h += '<h2 class="sec">各面向與抽到的卡</h2>' +
-      '<p class="lede">卡片代號來自業師回饋單的下拉選單，跟印刷牌組一致。' +
-      '同一組上下午各一列。</p>' +
-      '<div class="scroll"><table><thead><tr><th>組別</th><th>題目</th><th>抽到的卡</th>' +
+    h += '<h2 class="sec">各面向</h2>' +
+      '<p class="lede">面向對齊題目《新鬥士參戰》：本質 → 操作 → 取捨 → 呈現。' +
+      '一組多列＝不同評審各填了一張。</p>' +
+      '<div class="scroll"><table><thead><tr><th>組別</th><th>來源角色</th>' +
       FIELDS.team2.map((f) => '<th class="num">' + esc(f.label) + '<br>' + f.weight + '%</th>').join('') +
       '<th class="num">加權</th><th>若多兩小時，先改什麼</th></tr></thead><tbody>' +
       teams.map((t) => DATA.team2.filter((r) => r.subject === t)
-        .sort((a, b) => String(a.round).localeCompare(String(b.round)))
         .map((r) => '<tr><td><b>' + esc(t) + '</b></td>' +
-          '<td style="font-size:12.5px">' + esc(String(r.round || '').replace(/ ·.*/, '')) + '</td>' +
-          '<td style="font-size:12px">' + cardsOf(r) + '</td>' +
+          '<td style="font-size:12.5px">' + esc(r.character || '—') + '</td>' +
           FIELDS.team2.map((f) => '<td class="num">' + n1(Number(r[f.k]) || null) + '</td>').join('') +
           '<td class="big">' + n1(rowScore('team2', r)) + '</td>' +
           '<td style="font-size:12.5px">' + esc(r.next || '') + '</td></tr>').join('')
@@ -830,7 +822,8 @@ function renderDay2() {
 
   if (DATA.observe2.length) {
     h += '<h2 class="sec">個人過程觀察（30%，主要訊號）</h2>' +
-      '<p class="lede">五個面向等權。同一人若有上午與下午兩張、或多位觀察者，取平均。</p>' +
+      '<p class="lede">六個 Lens（READ／DECONSTRUCT／DIVERGE／DECIDE／COLLABORATE／ADAPT）加權平均。' +
+      '同一人若有上午與下午兩張、或多位觀察者，取平均。</p>' +
       '<div class="scroll"><table><thead><tr><th>候選人</th><th>D2 組</th>' +
       FIELDS.observe2.map((f) => '<th class="num">' + esc(f.label) + '</th>').join('') +
       '<th class="num">加權</th><th class="num">筆數</th></tr></thead><tbody>' +
@@ -1009,8 +1002,8 @@ function renderStatus() {
   [['peer1', 'D1 同儕評價單（學員）'],
    ['pair1', 'D1 選兩位最想同組的人（學員，最後一段）'],
    ['mentor1', 'D1 作品集答辯評分表（每位候選人）'],
-   ['observe2', 'D2 個人過程觀察表（每組每時段）'],
-   ['team2', 'D2 業師回饋單（每組每題）'],
+   ['observe2', 'D2 個人過程觀察表（每組上下午各一張）'],
+   ['team2', 'D2 業師回饋單（每組一張，Final Proposal）'],
    ['self2', 'D2 自評與團隊內互評單（學員）'],
   ].forEach(([id, title]) => { h += box(title, A.progressItems(id, DATA[id])); });
 
@@ -1284,7 +1277,7 @@ $('btn-demo').onclick = () => {
   // observe2 + team2 + self2
   T.d2Teams().forEach((t, ti) => {
     const members = T.teamMembers(t);
-    ['上午', '下午'].forEach((slot) => {
+    T.FORMS.observe2.head.find((f) => f.k === 'slot').options.forEach((slot) => {
       members.forEach((id) => {
         const r = named({ form: 'observe2', submitter: M2[ti % M2.length], subject: id, rel: '',
           team: t, slot, behaviour: rnd() < .5 ? pick(EV) : '' });
@@ -1292,15 +1285,12 @@ $('btn-demo').onclick = () => {
         d.observe2.push(r);
       });
     });
-    T.FORMS.team2.head.find((f) => f.k === 'round').options.forEach((round, ri) => {
+    // Final Proposal 一組一張；示範兩位 Assigned Reviewers 都填了。
+    [0, 1].forEach((ri) => {
       const tb = 2.6 + (ti % 5) * 0.4;
-      const deck = (n) => pick(T.CARDS[n]).v;
-      // 第一段只有角色卡，第二段才加進階條件卡
-      const cards = { card_archetype: deck('archetype') };
-      if (ri > 0) cards.card_advanced = deck('advanced');
-      const r = named(Object.assign({ form: 'team2', submitter: M2[ti % M2.length], subject: t, rel: '',
-        team: t, round,
-        strength: '機制講得清楚', gap: '公平性還沒解', next: pick(EV) }, cards));
+      const r = named({ form: 'team2', submitter: M2[(ti + ri) % M2.length], subject: t, rel: '',
+        team: t, character: pick(['嘎抓', '路易吉的吸塵器', '動森狸克', '薩爾達傳說的雞']),
+        strength: '本質抓得準', gap: '操作轉化還淺', next: pick(EV) });
       FIELDS.team2.forEach((f) => { r[f.k] = sc(tb); r[f.k + '_ev'] = ''; });
       d.team2.push(r);
     });
