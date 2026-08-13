@@ -175,6 +175,27 @@ tbody tr:hover td{background:var(--s1)}
 .whose .gap{border:0;padding:0;color:var(--acc)}
 
 .row-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+/* Day2 編組 */
+.gwrap{display:grid;grid-template-columns:240px 1fr;gap:14px;align-items:start}
+.gpool{display:flex;flex-direction:column;gap:4px}
+.gchip{display:flex;gap:8px;align-items:baseline;border:1px solid var(--line);background:var(--s1);
+       padding:7px 10px;cursor:pointer;font-size:13px;text-align:left;color:var(--fg);width:100%}
+.gchip:hover{border-color:var(--fg3)}
+.gchip.sel{border-color:var(--acc);background:var(--s2);font-weight:700}
+.gchip .gn{color:var(--fg3);font-size:11px;margin-left:auto;white-space:nowrap}
+.gteams{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.gteam{border:1px solid var(--line);background:var(--s1);padding:10px 12px;min-height:96px;cursor:pointer}
+.gteam.full{opacity:.55;cursor:not-allowed}
+.gteam.hint{border-color:var(--acc)}
+.gteam .gt{display:flex;justify-content:space-between;font-size:12px;color:var(--fg2);margin-bottom:6px}
+.gteam .gm{display:flex;justify-content:space-between;gap:6px;border:1px solid var(--line2);
+           padding:5px 8px;margin-top:4px;font-size:13px;cursor:pointer}
+.gteam .gm:hover{border-color:var(--acc)}
+.gteam .gm .rel{color:var(--acc);font-weight:700}
+.gpub{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.gpub > div{border:1px solid var(--line);background:var(--s1);padding:18px 20px}
+.gpub .pt{font-size:15px;color:var(--fg2);margin-bottom:10px;letter-spacing:.06em}
+.gpub .pm{font-size:22px;font-weight:700;line-height:1.6}
 .msg{font-size:13px;padding:11px 14px;border:1px solid var(--line);background:var(--s1);margin-top:12px;line-height:1.6}
 .msg.err{background:var(--s1);border-color:var(--acc)}
 .warnbox{background:var(--s1);border:1px solid var(--line);color:var(--fg2);padding:16px 20px;font-size:13px;line-height:1.7}
@@ -253,6 +274,7 @@ code{background:var(--s2);color:var(--fg2)}
 
   <section class="pane hide" id="pane-score"></section>
   <section class="pane hide" id="pane-peer"></section>
+  <section class="pane hide" id="pane-group"></section>
   <section class="pane hide" id="pane-day2"></section>
   <section class="pane hide" id="pane-brief"></section>
   <section class="pane hide" id="pane-status"></section>
@@ -274,7 +296,8 @@ let DATA = { peer1: [], pair1: [], mentor1: [], observe2: [], team2: [], self2: 
 let REVEAL = false;
 
 const TABS = [
-  ['score', '錄取總分'], ['peer', 'D1 同儕訊號'], ['day2', 'D2 過程與團隊'],
+  ['score', '錄取總分'], ['peer', 'D1 同儕訊號'], ['group', 'Day2 編組'],
+  ['day2', 'D2 過程與團隊'],
   ['brief', '個人回饋摘要'], ['status', '完成度'], ['roster', '名單'],
   ['export', '匯出'], ['load', '載入資料'],
 ];
@@ -453,7 +476,7 @@ function renderTabs(active) {
 function go(k) {
   renderTabs(k);
   TABS.forEach(([n]) => $('pane-' + n).classList.toggle('hide', n !== k));
-  ({ score: renderScore, peer: renderPeer, day2: renderDay2, brief: renderBrief,
+  ({ score: renderScore, peer: renderPeer, group: renderGroup, day2: renderDay2, brief: renderBrief,
      status: renderStatus, roster: renderRoster, export: renderExport }[k] || (() => {}))();
   window.scrollTo(0, 0);
 }
@@ -820,6 +843,167 @@ function pairingHTML() {
 }
 
 /* ── D2 過程與團隊 ─────────────────────────────────────── */
+/* ── Day2 編組 ────────────────────────────────────────
+   現場編組用：點左邊的人、再點右邊的組。條件在這裡硬擋——
+   一人只能在一組、每組上限照 規模.json 的「每組人數上限」。
+   狀態存這台裝置（localStorage），重新整理不會掉。
+   「公布模式」是乾淨的投影畫面，只有組別與名字，沒有互選資訊。 */
+const GKEY = 'tnda:grouping';
+let GSEL = null, GPUB = false;
+const GCAP = 3;
+const gload = () => { try { return JSON.parse(localStorage.getItem(GKEY) || '{}'); } catch (e) { return {}; } };
+const gsave = (m) => { try { localStorage.setItem(GKEY, JSON.stringify(m)); } catch (e) { /* ignore */ } };
+
+/** pair1 的選擇圖，編組提示用。 */
+function gpicks() {
+  const picks = {};
+  (DATA.pair1 || []).forEach((r) => {
+    const xs = [r.choice, r.choice2].filter(Boolean);
+    if (xs.length) picks[r.submitter] = xs;
+  });
+  const chose = (a, b) => (picks[a] || []).indexOf(b) >= 0;
+  return { picks, chose, mutual: (a, b) => chose(a, b) && chose(b, a) };
+}
+
+function renderGroup() {
+  const p = $('pane-group');
+  const asg = gload();
+  const teams = T.d2Teams();
+  const members = (t) => Object.keys(asg).filter((id) => asg[id] === t).sort();
+  const unassigned = T.allStudentIds().filter((id) => !asg[id]);
+  const { picks, chose, mutual } = gpicks();
+
+  if (GPUB) {
+    p.innerHTML = '<div class="row" style="justify-content:space-between">' +
+      '<h2 class="sec" style="margin:0">DAY 2 分組</h2>' +
+      '<button class="btn ghost" id="g-edit">返回編輯</button></div>' +
+      '<div class="gpub" style="margin-top:14px">' +
+      teams.map((t) => {
+        const ms = members(t);
+        return ms.length ? '<div><div class="pt">' + esc(t) + '</div><div class="pm">' +
+          ms.map((id) => idTag(id) + ' ' + esc(T.nameOf(id))).join('<br>') + '</div></div>' : '';
+      }).join('') + '</div>';
+    $('g-edit').onclick = () => { GPUB = false; renderGroup(); };
+    return;
+  }
+
+  const seed = (groups) => {
+    const cur = gload();
+    const free = teams.filter((t) => !Object.values(cur).includes(t));
+    groups.forEach((g) => {
+      if (!free.length || g.some((id) => cur[id])) return;
+      const t = free.shift();
+      g.forEach((id) => { cur[id] = t; });
+    });
+    gsave(cur); GSEL = null; renderGroup();
+  };
+  const findTrios = () => {
+    const done = new Set(Object.keys(asg)), out = [];
+    Object.keys(picks).sort().forEach((a) => {
+      if (done.has(a)) return;
+      const pair = picks[a] || [], x = pair[0], y = pair[1];
+      if (!x || !y || done.has(x) || done.has(y)) return;
+      if (mutual(a, x) && mutual(a, y) && mutual(x, y)) {
+        out.push([a, x, y].sort());
+        [a, x, y].forEach((i) => done.add(i));
+      }
+    });
+    return out;
+  };
+  const findPairs = () => {
+    const done = new Set(Object.keys(asg)), out = [];
+    Object.keys(picks).sort().forEach((a) => {
+      if (done.has(a)) return;
+      const b = (picks[a] || []).find((x) => !done.has(x) && x !== a && mutual(a, x));
+      if (b) { out.push([a, b]); done.add(a); done.add(b); }
+    });
+    return out;
+  };
+
+  const lone = teams.filter((t) => members(t).length === 1);
+  let warn = '';
+  if (!unassigned.length) {
+    warn = lone.length
+      ? '<div class="msg err">全部的人都分完了，但 ' + lone.map(esc).join('、') +
+        ' 只有 1 人——一個人不成組，把他併進別組。</div>'
+      : '<div class="msg">✓ 全員分完、每組 2–3 人。按「產生 config 名單」把結果帶回 config.js。</div>';
+  }
+
+  const relOf = (m) => !GSEL ? '' :
+    mutual(GSEL, m) ? '⇄' : chose(GSEL, m) ? '→' : chose(m, GSEL) ? '←' : '';
+
+  p.innerHTML = '<h2 class="sec">Day2 編組</h2>' +
+    '<p class="lede">點左邊選一個人、再點右邊的組放進去；點組裡的人＝移出。' +
+    '選了人之後，組卡會標記關係：<b>⇄ 互選</b>、→ 他選了這組的人、← 這組有人選他。' +
+    '<b>這個畫面含互選資訊，不要投影——公布請用「公布模式」。</b></p>' +
+    '<div class="row" style="gap:8px;margin-bottom:12px;flex-wrap:wrap">' +
+    '<button class="btn" id="g-trio">帶入三人全互選</button>' +
+    '<button class="btn" id="g-pair">帶入兩人互選</button>' +
+    '<button class="btn ghost" id="g-clear">清空重來</button>' +
+    '<span style="flex:1"></span>' +
+    '<button class="btn" id="g-out">產生 config 名單</button>' +
+    '<button class="btn primary" id="g-pub">公布模式</button></div>' +
+    warn +
+    '<div class="gwrap">' +
+    '<div><div class="cap" style="margin-bottom:6px">還沒分組　' + unassigned.length + ' 人</div>' +
+    '<div class="gpool">' +
+    unassigned.map((id) =>
+      '<button class="gchip' + (GSEL === id ? ' sel' : '') + '" data-id="' + esc(id) + '">' +
+      idTag(id) + '<b>' + esc(T.nameOf(id)) + '</b>' +
+      '<span class="gn">' + (picks[id] ? '選了 ' + picks[id].map(esc).join('、') : '未交') + '</span></button>'
+    ).join('') + '</div></div>' +
+    '<div class="gteams">' +
+    teams.map((t) => {
+      const ms = members(t);
+      const full = ms.length >= GCAP;
+      const hint = GSEL && !full && ms.some((m) => mutual(GSEL, m) || chose(GSEL, m) || chose(m, GSEL));
+      return '<div class="gteam' + (full ? ' full' : '') + (hint ? ' hint' : '') +
+        '" data-team="' + esc(t) + '">' +
+        '<div class="gt"><b>' + esc(t) + '</b><span>' + ms.length + ' / ' + GCAP + '</span></div>' +
+        ms.map((m) => '<div class="gm" data-id="' + esc(m) + '"><span>' + idTag(m) + ' ' +
+          esc(T.nameOf(m)) + '</span><span class="rel">' + relOf(m) + '</span></div>').join('') +
+        '</div>';
+    }).join('') + '</div></div>' +
+    '<div id="g-export"></div>';
+
+  p.querySelectorAll('.gchip').forEach((b) => {
+    b.onclick = () => { GSEL = (GSEL === b.dataset.id) ? null : b.dataset.id; renderGroup(); };
+  });
+  p.querySelectorAll('.gteam .gm').forEach((el) => {
+    el.onclick = (e) => {
+      e.stopPropagation();
+      const cur = gload(); delete cur[el.dataset.id]; gsave(cur); renderGroup();
+    };
+  });
+  p.querySelectorAll('.gteam').forEach((el) => {
+    el.onclick = () => {
+      if (!GSEL) return;
+      const t = el.dataset.team, cur = gload();
+      if (Object.keys(cur).filter((id) => cur[id] === t).length >= GCAP) return;
+      cur[GSEL] = t; gsave(cur); GSEL = null; renderGroup();
+    };
+  });
+  $('g-trio').onclick = () => seed(findTrios());
+  $('g-pair').onclick = () => seed(findPairs());
+  $('g-clear').onclick = () => {
+    if (confirm('確定清空這台裝置上的編組草稿嗎？')) { gsave({}); GSEL = null; renderGroup(); }
+  };
+  $('g-pub').onclick = () => { GPUB = true; renderGroup(); };
+  $('g-out').onclick = () => {
+    const cur = gload();
+    const lines = T.STUDENTS.map((st) =>
+      "  { id: '" + st.id + "', d1: '" + (st.d1 || '') + "',    d2: '" + (cur[st.id] || '') + "' },"
+    ).join('\n');
+    $('g-export').innerHTML = '<div class="card" style="margin-top:14px">' +
+      '<div class="cap">貼回 config.js 的 STUDENTS（整段取代中括號裡的內容），' +
+      '存檔後跑 蓋版本.py、commit、push。</div>' +
+      '<textarea class="field" style="width:100%;height:180px;font-family:monospace" readonly>' +
+      esc(lines) + '</textarea></div>';
+    const ta = $('g-export').querySelector('textarea');
+    ta.focus(); ta.select();
+  };
+}
+
 function renderDay2() {
   const p = $('pane-day2');
   if (!DATA.observe2.length && !DATA.team2.length && !DATA.self2.length)
