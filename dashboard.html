@@ -284,8 +284,8 @@ code{background:var(--s2);color:var(--fg2)}
 </main>
 </div>
 
-<script src="config.js?v=cacc4fda"></script>
-<script src="app.js?v=8aed0e3e"></script>
+<script src="config.js?v=05b472bd"></script>
+<script src="app.js?v=36434117"></script>
 <script>
 (() => {
 'use strict';
@@ -1030,7 +1030,7 @@ function renderDay2() {
       '<th class="num">加權</th><th>若多兩小時，先改什麼</th></tr></thead><tbody>' +
       teams.map((t) => DATA.team2.filter((r) => r.subject === t)
         .map((r) => '<tr><td><b>' + esc(t) + '</b></td>' +
-          '<td style="font-size:12.5px">' + esc(r.character || '—') + '</td>' +
+          '<td style="font-size:12.5px">' + esc(r.character ? A.cardLabel(r.character) : '—') + '</td>' +
           FIELDS.team2.map((f) => '<td class="num">' + n1(Number(r[f.k]) || null) + '</td>').join('') +
           '<td class="big">' + n1(rowScore('team2', r)) + '</td>' +
           '<td style="font-size:12.5px">' + esc(r.next || '') + '</td></tr>').join('')
@@ -1217,6 +1217,7 @@ function renderStatus() {
   // 收齊的定義寫在 app.js 的 progressItems，現場流程頁用的是同一份，
   // 兩邊的數字才不會兜不起來。
   [['peer1', 'D1 同儕評價單（學員）'],
+   ['topic2', 'D2 選題單（每組一張，開題時送出）'],
    ['pair1', 'D1 選兩位最想同組的人（學員，最後一段）'],
    ['mentor1', 'D1 作品集答辯評分表（每位候選人）'],
    ['observe2', 'D2 個人過程觀察表（每組上下午各一張）'],
@@ -1506,7 +1507,7 @@ $('btn-demo').onclick = () => {
     [0, 1].forEach((ri) => {
       const tb = 2.6 + (ti % 5) * 0.4;
       const r = named({ form: 'team2', submitter: M2[(ti + ri) % M2.length], subject: t, rel: '',
-        team: t, character: pick(['嘎抓', '路易吉的吸塵器', '動森狸克', '薩爾達傳說的雞']),
+        team: t, character: pick(T.CARDS.topic.map((c) => c.v)),
         strength: '本質抓得準', gap: '操作轉化還淺', next: pick(EV) });
       FIELDS.team2.forEach((f) => { r[f.k] = sc(tb); r[f.k + '_ev'] = ''; });
       d.team2.push(r);

@@ -29,6 +29,7 @@ function guard(hostEl) {
    差別只在 role —— 學員看不到業師端的評分表，也看不到儀表板。 */
 const ENTRY_DESC = {
   peer1:    '每位同學發表後填一列。匿名，不計入錄取分數。',
+  topic2:   '每組一張。全組決定來源角色，一人代表送出。',
   self2:    '每人一張。先自評，再評隊友，寫具體事例。',
   mentor1:  '每位候選人一張。六個面向 1–5 分，每分都要有證據。',
   observe2: '每組上下午各一張，逐人記錄六個 Lens。看過程不看成果。',
@@ -291,6 +292,7 @@ const PROGRESS_LABEL = {
   peer1:    '同儕評價單',
   pair1:    '選兩位最想同組的人',
   self2:    '自評與團隊內互評單',
+  topic2:   '選題單',
   mentor1:  '作品集答辯評分表',
   observe2: '個人過程觀察表',
   team2:    '業師回饋單',
@@ -316,8 +318,8 @@ function progressItems(formId, rows) {
     T.d2Teams().forEach((t) => slots.forEach((s) => out.push(has(done, t + '｜' + s))));
     return out.map((o) => ({ label: o.label.replace('｜', ' '), ok: o.ok }));
   }
-  if (formId === 'team2') {
-    // 一組一張（Final Proposal 講評時填）。
+  if (formId === 'team2' || formId === 'topic2') {
+    // 一組一張（選題單開題時、回饋單 Final Proposal 講評時）。
     const done = new Set(rows.map((r) => r.subject));
     return T.d2Teams().map((t) => ({ label: t, ok: done.has(t) }));
   }

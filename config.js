@@ -113,8 +113,21 @@ const SCALE_HINT = '1 不及格　2 尚有不足　3 達入學門檻　4 清楚�
    評鑑改成 Process-based：三個 Decision Gate 是觀察窗口，
    學員只知道 Gate 的時間，不預先知道 Gate 的內容與 Challenge——
    所以 SCHEDULE 裡 Gate 的 label／note／you（學員看得到）只寫
-   「階段 Review」，內容細節一律放 todo（只有業師與主辦看得到）。 */
-const CARDS = {};
+   「階段 Review」，內容細節一律放 todo（只有業師與主辦看得到）。
+
+   來源角色限縮成下面七選一（topic 牌組，對齊紙本題目卡的代號）。
+   開題後各組全組決定一個、由一人送出「選題單」；不同組可以選同一題。 */
+const CARDS = {
+  topic: [
+    { v: 'C01', label: 'Polaroid 相機' },
+    { v: 'C02', label: 'John Rod（THE JOJOLANDS）' },
+    { v: 'C03', label: '佩佩蛙 Pepe the Frog' },
+    { v: 'C04', label: '湯馬士小火車' },
+    { v: 'C05', label: '藥師貓貓（藥師少女的獨語）' },
+    { v: 'C06', label: 'Vault Boy（Fallout）' },
+    { v: 'C07', label: 'Faker（英雄聯盟）' },
+  ],
+};
 
 const FORMS = {
 
@@ -206,6 +219,29 @@ const FORMS = {
     },
   },
 
+  /* ── Day2 · 選題單（學員填，每組一張，開題後送出） ────────
+     以組為單位選定來源角色。全組討論決定後**由一人代表送出**；
+     送出後不能改（換題請找工作人員刪列）。業師回饋單用同一副
+     牌組代號，統計時直接對得起來。 */
+  topic2: {
+    day: 2, role: 'student', weightLabel: '選題',
+    eyebrow: 'DAY 2 · TOPIC PICK',
+    title: '選題單',
+    brief:
+      '全組討論決定<strong>一個來源角色</strong>，由一人代表送出。' +
+      '送出後不能改；不同組可以選同一題。',
+    subjectFrom: 'team',
+    head: [
+      { k: 'team', type: 'pick', label: '組別', optionsFrom: 'd2-teams', required: true, key: true },
+    ],
+    self: {
+      fields: [
+        { k: 'character', type: 'pick', label: '你們的來源角色', optionsFrom: 'cards:topic',
+          required: true, hint: '七選一。選他不是因為好做，是因為你們拆得出他的本質。' },
+      ],
+    },
+  },
+
   /* ── Day2 · 個人解題過程觀察表（業師填，30%） ────────────
      六個 Lens 對齊 Reviewer Brief：READ／DECONSTRUCT／DIVERGE／
      DECIDE／COLLABORATE／ADAPT。上午（探索＋GATE 01）與下午
@@ -251,8 +287,8 @@ const FORMS = {
     subjectFrom: 'team',
     head: [
       { k: 'team', type: 'pick', label: '組別', optionsFrom: 'd2-teams', required: true, key: true },
-      { k: 'character', type: 'text', label: '來源角色', max: 40,
-        placeholder: '他們選了誰來參戰…', hint: '各組自選，照他們的說法記，統計時看得懂就好。' },
+      { k: 'character', type: 'pick', label: '來源角色', optionsFrom: 'cards:topic',
+        hint: '照該組選題單的題目選；跟他們實際做的不一樣就照實際的選。' },
     ],
     self: {
       fields: [
@@ -377,14 +413,17 @@ const SCHEDULE = {
       { from: '10:00', to: '10:20', label: 'Briefing｜開場說明',
         note: '公布題目、規則與評鑑原則；三個 Gate 的時間公開，內容到時候才知道',
         you: '重新整理頁面看你的新組別；掃名牌 QR 認好自己',
-        todo: ['公布題目《新鬥士參戰》與活動規則',
-               '只公開 Gate 時間，不預告 Gate 內容與 Challenge'] },
+        todo: ['公布題目《新鬥士參戰》與七個來源角色（發題目卡）',
+               '只公開 Gate 時間，不預告 Gate 內容與 Challenge',
+               '盯選題單：每組開工前要送出'],
+        forms: ['topic2'] },
 
       { from: '10:20', to: '11:30', label: 'Open Explore｜自由探索', key: true,
         note: '怎麼讀題、調查、討論、分工，由團隊自己決定',
-        you: '沒有標準流程。怎麼理解題目、查什麼、從哪裡開始，都是你們的判斷',
+        you: '全組選定題目、送出選題單，然後開始。怎麼查、從哪裡開始，都是你們的判斷',
         todo: ['第一輪巡組：只觀察不指導，記具體行為不記印象',
-               '看 READ／DECONSTRUCT：怎麼讀題、有沒有回到來源素材查證'] },
+               '看 READ／DECONSTRUCT：怎麼讀題、有沒有回到來源素材查證'],
+        forms: ['topic2'] },
 
       { from: '11:30', to: '12:00', label: 'GATE 01｜階段 Review', key: true,
         note: '各組輪流接受第一次階段 Review',
