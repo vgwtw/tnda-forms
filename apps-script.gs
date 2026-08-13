@@ -24,8 +24,14 @@
  *
  * 換成你自己的一串字（長一點、不要用生日），只給主辦，
  * 第一次開儀表板時輸入一次即可。留空字串＝不檢查，只建議測試時這樣。
+ *
+ * ⚠️ 真的金鑰**只改在 Apps Script 編輯器裡**，不要 commit 回這個檔案——
+ *    repo 是公開的，金鑰寫在這裡等於沒有金鑰。
+ * ⚠️ 在編輯器改完任何東西（含金鑰）要「部署 → 管理部署作業 → ✏️ 編輯 →
+ *    版本選新增版本 → 部署」才會生效。按成「新增部署作業」會產生新網址，
+ *    config.js 指的還是舊的，怎麼輸入金鑰都會說不對。
  */
-var READ_KEY = 'CHANGE-ME-一串只有主辦知道的字';
+var READ_KEY = 'CHANGE-ME-換成只有主辦知道的一串字';
 
 /* ── 工具 ─────────────────────────────────────────────── */
 
@@ -142,32 +148,12 @@ function saveRoster_(p) {
   var ids = Object.keys(names);
   if (!ids.length) return json_({ ok: true, saved: 0 });
 
-  /* 合併，不是覆寫。名單是分好幾次輸入的——業師先到、學員名單後到，
-     人數還可能再變。整份覆寫的話，只存業師那幾筆就會把學員全清掉。
-     值為空字串＝把那個 id 從名單移除。 */
-  var merged = {}, order = [];
   var last = sh.getLastRow();
-  if (last > 1) {
-    var old = sh.getRange(2, 1, last - 1, 2).getValues();
-    for (var i = 0; i < old.length; i++) {
-      var oid = String(old[i][0] || '').trim();
-      if (!oid) continue;
-      if (!(oid in merged)) order.push(oid);
-      merged[oid] = String(old[i][1] || '');
-    }
-  }
-  for (var j = 0; j < ids.length; j++) {
-    if (!(ids[j] in merged)) order.push(ids[j]);
-    merged[ids[j]] = String(names[ids[j]] || '');
-  }
-  var rows = [];
-  for (var k = 0; k < order.length; k++) {
-    if (merged[order[k]] !== '') rows.push([order[k], merged[order[k]]]);
-  }
-
   if (last > 1) sh.getRange(2, 1, last - 1, 2).clearContent();
-  if (rows.length) sh.getRange(2, 1, rows.length, 2).setValues(rows);
-  return json_({ ok: true, saved: ids.length, total: rows.length });
+  sh.getRange(2, 1, ids.length, 2).setValues(ids.map(function (id) {
+    return [id, String(names[id] || '')];
+  }));
+  return json_({ ok: true, saved: ids.length });
 }
 
 function readRoster_() {
