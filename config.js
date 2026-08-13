@@ -479,8 +479,13 @@ function applyNames(map) {
   if (!map) return;
   Object.keys(map).forEach((id) => {
     const nm = String(map[id] || '').trim();
-    if (!nm || !PEOPLE[id]) return;
-    PEOPLE[id].name = nm;
+    if (!nm) return;
+    // 試算表會把「01」存成數字 1，讀回來就少了前導零——
+    // 對不上就補零再對一次，否則 01–09 在別台裝置上永遠沒有名字。
+    let key = String(id);
+    if (!PEOPLE[key] && /^\d+$/.test(key) && key.length < 2) key = '0' + key;
+    if (!PEOPLE[key]) return;
+    PEOPLE[key].name = nm;
   });
   recountDup();
 }

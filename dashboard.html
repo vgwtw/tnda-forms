@@ -262,7 +262,7 @@ code{background:var(--s2);color:var(--fg2)}
 </main>
 </div>
 
-<script src="config.js?v=bea8b0fc"></script>
+<script src="config.js?v=cbd8d261"></script>
 <script src="app.js?v=8aed0e3e"></script>
 <script>
 (() => {
@@ -700,24 +700,57 @@ function pairingHTML() {
   const submitted = Object.keys(pick);
   const chose = (a, b) => (pick[a] || []).indexOf(b) >= 0;
 
-  /* 一個人選兩位，所以可能同時跟兩個人互選成功。照編號順序先配先贏，
-     配過的就不再參與——結果才會是穩定的，重跑一次不會換一組人。 */
-  const matched = [], paired = new Set();
-  submitted.slice().sort().forEach((a) => {
+  /* 每人選兩位，所以最強的訊號是「三人全互選」：三個人互相都把彼此
+     選進自己的兩位裡（每人只有兩個位子，所以六個方向全部成立）——
+     這就是一組完整的隊，先取。照編號順序取，取過的不再參與，
+     結果才會是穩定的，重跑一次不會換一組人。 */
+  const paired = new Set();
+  const trios = [];
+  const ordered = submitted.slice().sort();
+  ordered.forEach((a) => {
+    if (paired.has(a)) return;
+    const [x, y] = pick[a] || [];
+    if (!x || !y || paired.has(x) || paired.has(y)) return;
+    if (chose(x, a) && chose(x, y) && chose(y, a) && chose(y, x)) {
+      trios.push([a, x, y].sort());
+      paired.add(a); paired.add(x); paired.add(y);
+    }
+  });
+
+  /* 剩下的人再看兩人互選，先湊成對，第三人從「還沒配到」牽線。 */
+  const matched = [];
+  ordered.forEach((a) => {
     if (paired.has(a)) return;
     const b = (pick[a] || []).find((x) => !paired.has(x) && x !== a && chose(x, a));
     if (b) { matched.push([a, b]); paired.add(a); paired.add(b); }
   });
   const unpaired = T.allStudentIds().filter((id) => !paired.has(id));
 
-  h += '<h2 class="sec">互選成功　' + matched.length + ' 對</h2>' +
-    '<p class="lede">兩個人互相把對方選進自己的兩位裡，直接成組。' +
+  h += '<h2 class="sec">三人全互選　' + trios.length + ' 組</h2>' +
+    '<p class="lede">三個人互相都把彼此選進自己的兩位裡——這已經是一組完整的隊，直接定案。' +
     '已交 <b>' + submitted.length + '</b> / ' + T.allStudentIds().length + ' 人。</p>' +
+    (trios.length
+      ? '<div class="card"><div class="grid g3">' + trios.map((t) =>
+          '<div style="border:1px solid var(--acc);background:var(--s1);padding:10px 12px;font-size:13.5px">' +
+          t.map((i) => esc(T.labelOf(i))).join('　⇄　') + '</div>').join('') + '</div></div>'
+      : '<div class="card"><span class="sub">還沒有三人全互選的組。</span></div>');
+
+  // 兩人成對後還缺第三人——「還沒配到、而且兩位都選了」的人是現成人選。
+  const thirdFor = ([a, b]) => T.allStudentIds()
+    .filter((u) => !paired.has(u) && u !== a && u !== b && chose(u, a) && chose(u, b));
+
+  h += '<h2 class="sec">兩人互選　' + matched.length + ' 對</h2>' +
+    '<p class="lede">兩個人互相把對方選進自己的兩位裡，先湊成對；' +
+    '第三人從「還沒配到」裡牽線——卡片下面若列出人名，是<b>兩位都選了他們</b>的現成人選。</p>' +
     (matched.length
-      ? '<div class="card"><div class="grid g3">' + matched.map(([a, b]) =>
-          '<div style="border:1px solid var(--line);background:var(--s1);padding:10px 12px;font-size:13.5px">' +
-          esc(T.labelOf(a)) + '　⇄　' + esc(T.labelOf(b)) + '</div>').join('') + '</div></div>'
-      : '<div class="card"><span class="sub">還沒有互選成功的配對。</span></div>');
+      ? '<div class="card"><div class="grid g3">' + matched.map(([a, b]) => {
+          const cand = thirdFor([a, b]);
+          return '<div style="border:1px solid var(--line);background:var(--s1);padding:10px 12px;font-size:13.5px">' +
+            esc(T.labelOf(a)) + '　⇄　' + esc(T.labelOf(b)) +
+            (cand.length ? '<div style="font-size:12px;color:var(--fg2);margin-top:5px">＋想加入：' +
+              cand.map((i) => esc(T.labelOf(i))).join('、') + '</div>' : '') + '</div>';
+        }).join('') + '</div></div>'
+      : '<div class="card"><span class="sub">還沒有兩人互選的配對。</span></div>');
 
   // 被幾個人選到（兩個位子都算）。單向選擇不另開一區，併進下表當一欄，
   // 否則每人一格會排掉整個螢幕。
