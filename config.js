@@ -93,7 +93,8 @@ const MENTORS = [
      chips   多選標籤；max 限制數量
      text    單行
      memo    多行
-     pick    從清單挑一個（options 或 optionsFrom）
+     pick    從清單挑一個（options 或 optionsFrom）；excludes: '另一欄的 k'
+             ＝兩欄互斥，對方選過的選項會反灰（選兩位不能選同一人）
 
    head 欄位加 key:true 代表「這一格決定這份表單是哪一份」——同一位填答者
    用同一組 key 重送時會覆蓋舊資料，不會產生重複。
@@ -164,9 +165,10 @@ const FORMS = {
     self: {
       fields: [
         { k: 'choice', type: 'pick', label: '第一位', optionsFrom: 'students-except-me',
-          required: true },
+          required: true, excludes: 'choice2' },
         { k: 'choice2', type: 'pick', label: '第二位', optionsFrom: 'students-except-me',
-          required: true },
+          required: true, excludes: 'choice',
+          hint: '跟第一位不能選同一個人。' },
         { k: 'why', type: 'text', label: '一句話說為什麼（選填）', max: 40,
           placeholder: '今天看到他們什麼讓你想找…' },
       ],

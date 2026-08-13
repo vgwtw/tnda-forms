@@ -31,7 +31,7 @@
   <footer class="foot"><div class="inner" id="foot"></div></footer>
 </div>
 
-<script src="config.js?v=1d165ca2"></script>
+<script src="config.js?v=cacc4fda"></script>
 <script src="app.js?v=8aed0e3e"></script>
 <script>
 (() => {
@@ -169,12 +169,17 @@ function fieldEl(f, store, onChange) {
   else if (f.type === 'pick') {
     const opts = (f.options || A.optionList(f.optionsFrom, S.me ? S.me.id : ''))
       .map((o) => (typeof o === 'string' ? { v: o, label: o } : o));
+    // excludes：跟另一個欄位互斥（「選兩位」不能兩格選同一個人）。
+    // 對方選過的反灰；舊草稿裡若已經撞名，直接清掉這一格讓他重選。
+    const taken = f.excludes ? store[f.excludes] : null;
+    if (taken && store[f.k] === taken) store[f.k] = null;
     const box = document.createElement('div');
     box.className = 'pick' + (opts.length > 4 ? ' cols' : '');
     opts.forEach((o) => {
       const b = document.createElement('button');
       b.textContent = o.label;
       b.setAttribute('aria-pressed', String(store[f.k] === o.v));
+      b.disabled = taken != null && o.v === taken;
       b.onclick = () => { store[f.k] = o.v; render(); bump(); };
       box.appendChild(b);
     });
@@ -202,10 +207,12 @@ function fieldsInto(host, fields, store, onChange) {
 
 /** 只填一次那一段裡，required 的欄位有沒有填。逐人區塊另有 requires 把關。 */
 function selfReady() {
-  const need = [].concat(
-    F.self ? F.self.fields : [], F.foot ? F.foot.fields : []
-  ).filter((f) => f.required && visible(f, S.single));
-  return need.every((f) => S.single[f.k] != null && S.single[f.k] !== '');
+  const fields = [].concat(F.self ? F.self.fields : [], F.foot ? F.foot.fields : []);
+  const need = fields.filter((f) => f.required && visible(f, S.single));
+  if (!need.every((f) => S.single[f.k] != null && S.single[f.k] !== '')) return false;
+  // excludes：兩格撞同一個值就不算填好（畫面上也已經反灰擋住了）。
+  return fields.every((f) => !f.excludes || !S.single[f.k] ||
+    S.single[f.k] !== S.single[f.excludes]);
 }
 
 /* ════ 畫面 ═══════════════════════════════════════════════ */
