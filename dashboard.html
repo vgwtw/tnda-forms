@@ -284,8 +284,8 @@ code{background:var(--s2);color:var(--fg2)}
 </main>
 </div>
 
-<script src="config.js?v=05b472bd"></script>
-<script src="app.js?v=36434117"></script>
+<script src="config.js?v=5df0cc69"></script>
+<script src="app.js?v=856a672d"></script>
 <script>
 (() => {
 'use strict';
@@ -1010,6 +1010,14 @@ function renderDay2() {
     return void (p.innerHTML = '<div class="empty">還沒有 Day2 資料。</div>');
   const { people, teamScore } = computeAll();
   let h = '';
+
+  if (DATA.topic2 && DATA.topic2.length) {
+    const tp = {};
+    DATA.topic2.forEach((r) => { if (r.subject && r.character) tp[r.subject] = r.character; });
+    h += '<h2 class="sec">各組題目</h2><div class="card" style="font-size:13.5px;line-height:2">' +
+      T.d2Teams().map((t) => '<span style="white-space:nowrap;margin-right:14px"><b>' + esc(t) +
+        '</b>　' + esc(tp[t] ? A.cardLabel(tp[t]) : '——') + '</span>').join('') + '</div>';
+  }
 
   if (DATA.team2.length) {
     const teams = Object.keys(teamScore).sort();

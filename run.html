@@ -67,8 +67,8 @@
   </main>
 </div>
 
-<script src="config.js?v=05b472bd"></script>
-<script src="app.js?v=36434117"></script>
+<script src="config.js?v=5df0cc69"></script>
+<script src="app.js?v=856a672d"></script>
 <script>
 (() => {
 'use strict';
@@ -78,7 +78,7 @@ const $ = (id) => document.getElementById(id), esc = A.esc;
 /* 掃 QR 進來的第一頁（業師版）：當天的流程 ＋ 每一段要做的事 ＋ 要收的表單。
    唯讀，不標「現在」——行程會 delay，標了多半是錯的。 */
 
-let DATA = null;
+let DATA = null, TOPICS = null;
 const two = (n) => String(n).padStart(2, '0');
 const todayISO = () => {
   const d = new Date();
@@ -109,6 +109,18 @@ function render() {
   if (otherDay) {
     h += '<a class="other" href="run.html?day=' + esc(otherDay) + '">' +
       '看 DAY ' + esc(otherDay) + '　' + esc(T.SCHEDULE[otherDay].title || '') + ' 的流程 →</a>';
+  }
+
+  // Day2：各組選了什麼題目，一列看完。還沒選的顯示破折號。
+  if (DAY === '2' && TOPICS && Object.keys(TOPICS).length) {
+    h += '<div style="border:2px solid var(--tnda-black);padding:10px 12px;margin-top:12px;' +
+      'font-size:12.5px;line-height:1.9">' +
+      '<b style="font:700 10px/1.2 var(--font-display);letter-spacing:.12em;' +
+      'color:var(--tnda-orange)">各組題目</b><br>' +
+      T.d2Teams().map((t) => '<span style="white-space:nowrap;margin-right:10px">' +
+        '<b>' + esc(t) + '</b>　' +
+        esc(TOPICS[t] ? A.cardLabel(TOPICS[t]).replace(/^C\d+　/, '') : '——') + '</span>').join('') +
+      '</div>';
   }
 
   h += (S.blocks || []).map(blockHTML).join('');
@@ -159,6 +171,11 @@ async function refresh() {
 A.claimIdentity();
 A.guard(document.querySelector('.app'));
 render();
+if (DAY === '2') {
+  const pullTopics = () => A.fetchTopics().then((t) => { TOPICS = t; render(); });
+  pullTopics();
+  setInterval(pullTopics, 120000);
+}
 A.nameNotice(document.querySelector('.app'));
 A.syncNames().then(() => { A.nameNotice(document.querySelector('.app')); render(); });
 

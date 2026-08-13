@@ -31,8 +31,8 @@
   <footer class="foot"><div class="inner" id="foot"></div></footer>
 </div>
 
-<script src="config.js?v=05b472bd"></script>
-<script src="app.js?v=36434117"></script>
+<script src="config.js?v=5df0cc69"></script>
+<script src="app.js?v=856a672d"></script>
 <script>
 (() => {
 'use strict';
@@ -46,6 +46,10 @@ const formId = QS.get('f') || 'peer1';
 const F = T.FORMS[formId];
 /** 回上一頁的退路：從哪一天的行程表點進來就回哪一頁。 */
 const dayParam = QS.get('day') || '1';
+
+/* Day2 各組選的題目（免金鑰）。業師的觀察表／回饋單選了組別後，
+   抬頭會直接顯示該組的題目，不用回頭問學生。 */
+let TOPICS = null;
 if (!F) {
   document.body.innerHTML = '<div style="padding:40px;font:400 16px/1.6 sans-serif">' +
     '找不到表單 <code>' + esc(formId) + '</code>。請從 <a href="index.html">學員入口</a> 或 ' +
@@ -173,6 +177,8 @@ function fieldEl(f, store, onChange) {
     // 對方選過的反灰；舊草稿裡若已經撞名，直接清掉這一格讓他重選。
     const taken = f.excludes ? store[f.excludes] : null;
     if (taken && store[f.k] === taken) store[f.k] = null;
+    // 只有一個選項就直接帶入（例如選題單的組別＝自己那組），少一次點擊。
+    if (opts.length === 1 && !store[f.k]) store[f.k] = opts[0].v;
     const box = document.createElement('div');
     box.className = 'pick' + (opts.length > 4 ? ' cols' : '');
     opts.forEach((o) => {
@@ -291,7 +297,11 @@ function renderMain() {
   if (F.head && F.head.length) {
     const s = document.createElement('div');
     s.className = 'hint'; s.style.marginBottom = '14px';
-    s.textContent = F.head.map((f) => f.label + '：' + headText(f)).join('　·　');
+    let line = F.head.map((f) => f.label + '：' + headText(f)).join('　·　');
+    if (TOPICS && S.head.team && TOPICS[S.head.team]) {
+      line += '　·　題目：' + A.cardLabel(TOPICS[S.head.team]);
+    }
+    s.textContent = line;
     v.appendChild(s);
   }
 
@@ -580,6 +590,9 @@ A.mountBack($('back'),
 A.nameNotice(document.querySelector('.app'));
 A.syncNames().then(() => { A.nameNotice(document.querySelector('.app')); render(); });
 
+if (F.day === 2 && formId !== 'topic2') {
+  A.fetchTopics().then((t) => { TOPICS = t; if (S.view === 'main') render(); });
+}
 A.claimIdentity();
 const me = A.draft.identity();
 if (me && me.role === F.role && me.id) {

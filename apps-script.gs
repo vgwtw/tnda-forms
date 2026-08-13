@@ -165,6 +165,23 @@ function readRoster_() {
   return out;
 }
 
+/** 各組選的題目：讀 topic2 分頁，同一組有多列時後面的蓋前面（＝最新）。 */
+function readTopics_() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('topic2');
+  if (!sh) return {};
+  var vals = sh.getDataRange().getValues();
+  if (vals.length < 2) return {};
+  var head = vals[0].map(String);
+  var iT = head.indexOf('subject'), iC = head.indexOf('character');
+  if (iT < 0 || iC < 0) return {};
+  var out = {};
+  for (var i = 1; i < vals.length; i++) {
+    var t = String(vals[i][iT] || ''), c = String(vals[i][iC] || '');
+    if (t && c) out[t] = c;
+  }
+  return out;
+}
+
 /* ── 讀取（給儀表板） ─────────────────────────────────── */
 
 /**
@@ -180,8 +197,10 @@ function doGet(e) {
   var action = (e && e.parameter && e.parameter.action) || 'ping';
   var only = e && e.parameter && e.parameter.form;
 
-  // ping 與 roster 不需要金鑰：學員端各頁都要讀得到改過的姓名。
+  // ping、roster、topics 不需要金鑰：學員端各頁都要讀得到姓名；
+  // 各組選的題目現場本來就會公布，業師手機不用金鑰也要看得到。
   if (action === 'roster') return json_({ ok: true, names: readRoster_() });
+  if (action === 'topics') return json_({ ok: true, topics: readTopics_() });
 
   if (action !== 'ping' && READ_KEY &&
       String((e && e.parameter && e.parameter.key) || '') !== READ_KEY) {

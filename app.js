@@ -32,8 +32,8 @@ const ENTRY_DESC = {
   topic2:   '每組一張。全組決定來源角色，一人代表送出。',
   self2:    '每人一張。先自評，再評隊友，寫具體事例。',
   mentor1:  '每位候選人一張。六個面向 1–5 分，每分都要有證據。',
-  observe2: '每組上下午各一張，逐人記錄六個 Lens。看過程不看成果。',
-  team2:    '每組一張，Final Proposal 講評時填。分數套用到組內每一位。',
+  observe2: '每組上下午各一張，逐人記錄。',
+  team2:    '每組一張，Final Proposal 講評時填。',
 };
 
 function entryHTML(role) {
@@ -174,6 +174,11 @@ function optionList(from, me) {
   if (from === 'mentors-day2')      return asPeople(T.mentorIdsForDay(2));
   if (from === 'd1-groups')         return T.d1Groups().map((g) => ({ v: g, label: g }));
   if (from === 'd2-teams')          return T.d2Teams().map((t) => ({ v: t, label: t }));
+  // 只有「我自己那一組」——選題單用，別組的題目不干你的事。
+  if (from === 'my-d2-team') {
+    const t = T.d2TeamOf(me);
+    return t ? [{ v: t, label: t }] : [];
+  }
   // cards:archetype / cards:moveLimit / cards:stage / cards:interaction
   if (from && from.indexOf('cards:') === 0) {
     const deck = (T.CARDS || {})[from.slice(6)] || [];
@@ -332,6 +337,19 @@ function progressOf(formId, rows) {
            done: items.filter((i) => i.ok).length, total: items.length, items };
 }
 
+/* ── 各組題目 ──────────────────────────────────────────────
+   選題單送出後，各組選了什麼不是秘密（現場本來就會公布），
+   所以後端提供免金鑰的 action=topics——業師手機不用金鑰也看得到。
+   後端還沒更新或斷網時回空物件，畫面照常只是不顯示題目。 */
+async function fetchTopics() {
+  if (!T.ENDPOINT) return {};
+  try {
+    const res = await fetch(T.ENDPOINT + (T.ENDPOINT.includes('?') ? '&' : '?') + 'action=topics');
+    const d = await res.json();
+    return (d.ok && d.topics) ? d.topics : {};
+  } catch (e) { return {}; }
+}
+
 /* ── 儀表板的讀取金鑰 ──────────────────────────────────────
    後端的 /exec 網址是公開的（學員不必登入 Google 才做得到），所以
    「把資料讀出來」這件事另外用一把金鑰擋。金鑰不寫在任何上架的檔案裡，
@@ -367,7 +385,7 @@ async function saveNames(map) {
   return d;
 }
 
-return { esc, guard, entryHTML, readKey, fetchAll, progressItems, progressOf, PROGRESS_LABEL,
+return { esc, guard, entryHTML, readKey, fetchAll, fetchTopics, progressItems, progressOf, PROGRESS_LABEL,
          draft, scopeList, optionList, cardLabel, columnsOf, submit, confirmSend,
          mountBack, formsFor, lock, syncNames, saveNames, nameNotice, claimIdentity,
          toCSV, parseCSV, download, mean, median, weighted100 };
