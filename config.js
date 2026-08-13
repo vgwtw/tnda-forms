@@ -71,17 +71,12 @@ const STUDENTS = [
    同一個人兩天都來 → **只給他一個 id**，寫 days: [1, 2]。
    不要為了兩天開兩個 id：那樣他在名單裡會出現兩次，改名也要改兩次。 */
 const MENTORS = [
-  // Day 1：5 位
+  // Day1 5 位、Day2 4 位——同一批人，兩天都到的排在後面
   { id: 'M1', days: [1] },
-  { id: 'M2', days: [1] },
-  { id: 'M3', days: [1] },
-  { id: 'M4', days: [1] },
-  { id: 'M5', days: [1] },
-  // Day 2：4 位，兩天不同人
-  { id: 'M6', days: [2] },
-  { id: 'M7', days: [2] },
-  { id: 'M8', days: [2] },
-  { id: 'M9', days: [2] },
+  { id: 'M2', days: [1, 2] },
+  { id: 'M3', days: [1, 2] },
+  { id: 'M4', days: [1, 2] },
+  { id: 'M5', days: [1, 2] },
 ];
 
 
