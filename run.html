@@ -61,7 +61,8 @@
     <div id="out"></div>
     <div class="foot-note">
       時程會依現場進度滾動調整；真的改了就改 <code>config.js</code> 的 <code>SCHEDULE</code>。<br>
-      實線框是你要填的表單，虛線框是學員填的（點進去可代填）。後面的數字是收了幾份，每 2 分鐘自己更新。<br>
+      實線框是你要填的表單；虛線框是學員填的，<strong>只顯示收件數、點不開</strong>——
+      要代填請掃該學員的名牌 QR 用他的身分填。數字每 2 分鐘自己更新。<br>
       表單<strong>送出後不能修改</strong>，要讓某個人重填，到試算表把他那幾列刪掉。
     </div>
   </main>
@@ -145,18 +146,19 @@ function blockHTML(b) {
   return h + '</div></div>';
 }
 
-/** 一份表單的按鈕：點了直接開，後面是收了幾份。虛線＝學員填的。 */
+/** 一份表單的章：業師要填的可以點開；學員填的（虛線）**只顯示收件數、
+ *  不能點**——業師誤點進去會用錯身分填錯表。要代填就掃該學員的名牌 QR。 */
 function formChip(id) {
-  const stu = T.FORMS[id].role === 'student' ? ' stu' : '';
+  const isStu = T.FORMS[id].role === 'student';
   let href = 'form.html?f=' + encodeURIComponent(id) + '&day=' + encodeURIComponent(DAY);
   // 全員表單（想玩投票）從業師端點進去要列業師名單，不能看到學員頁那份。
   if (T.FORMS[id].role === 'all') href += '&who=m';
   const label = esc(A.PROGRESS_LABEL[id] || id);
-  if (!DATA) return '<a class="wchip' + stu + '" href="' + href + '">' + label + '</a>';
-  const p = A.progressOf(id, DATA[id]);
-  const full = p.total > 0 && p.done >= p.total;
-  return '<a class="wchip' + stu + (full ? ' full' : '') + '" href="' + href + '">' + label +
-    '<b>' + p.done + ' / ' + p.total + '</b></a>';
+  const p = DATA ? A.progressOf(id, DATA[id]) : null;
+  const full = p && p.total > 0 && p.done >= p.total;
+  const count = p ? '<b>' + p.done + ' / ' + p.total + '</b>' : '';
+  if (isStu) return '<span class="wchip stu" style="cursor:default">' + label + count + '</span>';
+  return '<a class="wchip' + (full ? ' full' : '') + '" href="' + href + '">' + label + count + '</a>';
 }
 
 async function refresh() {
