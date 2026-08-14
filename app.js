@@ -32,15 +32,15 @@ const ENTRY_DESC = {
   topic2:   '每組一張。全組決定來源角色，一人代表送出。',
   self2:    '每人一張。先自評，再評隊友，寫具體事例。',
   mentor1:  '每位候選人一張。六個面向 1–5 分，每分都要有證據。',
-  observe2: '每組上下午各一張，逐人記錄。',
-  team2:    '每組一張，Final Proposal 講評時填。',
+  vote2:    '每組提報完按一票：想玩／還不想。不計分。',
 };
 
 function entryHTML(role) {
   let html = '';
   [1, 2].forEach((day) => {
-    const ids = Object.keys(T.FORMS)
-      .filter((id) => T.FORMS[id].day === day && T.FORMS[id].role === role);
+    const ids = Object.keys(T.FORMS).filter((id) => T.FORMS[id].day === day &&
+      !T.FORMS[id].retired &&
+      (T.FORMS[id].role === role || T.FORMS[id].role === 'all'));
     if (!ids.length) return;
     html += '<div class="day"><span>' + day + '</span><span>DAY ' + day + '</span></div>';
     ids.forEach((id) => {
@@ -67,7 +67,8 @@ function mountBack(el, href, label) {
 
 /** 這個時段、這個角色要填哪幾份表單。行程表兩邊共用同一份 forms 設定。 */
 function formsFor(block, role) {
-  return (block.forms || []).filter((id) => T.FORMS[id] && (!role || T.FORMS[id].role === role));
+  return (block.forms || []).filter((id) => T.FORMS[id] &&
+    (!role || T.FORMS[id].role === role || T.FORMS[id].role === 'all'));
 }
 
 /* ── 送出鎖 ────────────────────────────────────────────────
@@ -160,6 +161,11 @@ function scopeList(scope, me, ctx) {
   if (scope === 'd1-peers')     return T.studentsIn(T.d1GroupOf(me)).filter((id) => id !== me);
   if (scope === 'd2-teammates') return T.teamMembers(T.d2TeamOf(me)).filter((id) => id !== me);
   if (scope === 'd2-members')   return T.teamMembers((ctx && ctx.team) || '');
+  // 想玩投票：對每一組各投一票；學員跳過自己那組，業師全投。
+  if (scope === 'vote-teams') {
+    const mine = T.d2TeamOf(me);
+    return T.d2Teams().filter((t) => t !== mine);
+  }
   return [];
 }
 
@@ -174,6 +180,8 @@ function optionList(from, me) {
   if (from === 'mentors-day2')      return asPeople(T.mentorIdsForDay(2));
   if (from === 'd1-groups')         return T.d1Groups().map((g) => ({ v: g, label: g }));
   if (from === 'd2-teams')          return T.d2Teams().map((t) => ({ v: t, label: t }));
+  // 業師主責的組——Day2 觀察表與回饋單用。
+  if (from === 'assigned-teams') return T.assignedTeams(me).map((t) => ({ v: t, label: t }));
   // 只有「我自己那一組」——選題單用，別組的題目不干你的事。
   if (from === 'my-d2-team') {
     const t = T.d2TeamOf(me);
@@ -299,8 +307,9 @@ const PROGRESS_LABEL = {
   self2:    '自評與團隊內互評單',
   topic2:   '選題單',
   mentor1:  '作品集答辯評分表',
-  observe2: '個人過程觀察表',
-  team2:    '業師回饋單',
+  observe2: '個人過程觀察表（已改紙本）',
+  team2:    '業師回饋單（已停用）',
+  vote2:    '想玩投票',
 };
 
 function progressItems(formId, rows) {
@@ -310,6 +319,11 @@ function progressItems(formId, rows) {
   if (formId === 'peer1' || formId === 'self2' || formId === 'pair1') {
     const done = new Set(rows.map((r) => r.submitter));   // 誰交了
     return T.allStudentIds().map((id) => ({ id, label: id + '　' + T.nameOf(id), ok: done.has(id) }));
+  }
+  if (formId === 'vote2') {
+    const done = new Set(rows.map((r) => r.submitter));
+    return T.allStudentIds().concat(T.mentorIdsForDay(2))
+      .map((id) => ({ id, label: id + '　' + T.nameOf(id), ok: done.has(id) }));
   }
   if (formId === 'mentor1') {
     const done = new Set(rows.map((r) => r.subject));     // 誰被評過

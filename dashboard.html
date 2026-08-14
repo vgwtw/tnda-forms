@@ -284,15 +284,15 @@ code{background:var(--s2);color:var(--fg2)}
 </main>
 </div>
 
-<script src="config.js?v=1662e704"></script>
-<script src="app.js?v=98ad2e67"></script>
+<script src="config.js?v=b1499829"></script>
+<script src="app.js?v=d139e532"></script>
 <script>
 (() => {
 'use strict';
 const T = window.TNDA, A = window.APP;
 const $ = (id) => document.getElementById(id), esc = A.esc;
 
-let DATA = { peer1: [], pair1: [], mentor1: [], observe2: [], team2: [], self2: [] };
+let DATA = { peer1: [], pair1: [], mentor1: [], observe2: [], team2: [], self2: [], topic2: [], vote2: [] };
 let REVEAL = false;
 
 const TABS = [
@@ -938,12 +938,14 @@ function renderGroup() {
     mutual(GSEL, m) ? '⇄' : chose(GSEL, m) ? '→' : chose(m, GSEL) ? '←' : '';
 
   p.innerHTML = '<h2 class="sec">Day2 編組</h2>' +
+    '「一鍵排」＝互選的人一定同組，之後按答辯分數高→低依序填 T01 往後；排完可手動微調。' +
     '<p class="lede">點左邊選一個人、再點右邊的組放進去；點組裡的人＝移出。' +
     '選了人之後，組卡會標記關係：<b>⇄ 互選</b>、→ 他選了這組的人、← 這組有人選他。' +
     '<b>這個畫面含互選資訊，不要投影——公布請用「公布模式」。</b></p>' +
     '<div class="row" style="gap:8px;margin-bottom:12px;flex-wrap:wrap">' +
     '<button class="btn" id="g-trio">帶入三人全互選</button>' +
     '<button class="btn" id="g-pair">帶入兩人互選</button>' +
+    '<button class="btn" id="g-auto">一鍵排：互選＋分數分層</button>' +
     '<button class="btn ghost" id="g-clear">清空重來</button>' +
     '<span style="flex:1"></span>' +
     '<button class="btn" id="g-out">產生 config 名單</button>' +
@@ -990,6 +992,46 @@ function renderGroup() {
   });
   $('g-trio').onclick = () => seed(findTrios());
   $('g-pair').onclick = () => seed(findPairs());
+  $('g-auto').onclick = () => {
+    if (!DATA.mentor1.length) return alert('還沒有答辯分數——先到「載入資料」抓最新資料。');
+    if (!confirm('會覆蓋目前的編組草稿，改用「互選優先＋答辯分數分層」重排。繼續？')) return;
+    const { people } = computeAll();
+    const score = (id) => {
+      const x = people[id];
+      return (x && x.parts.mentor1 != null) ? x.parts.mentor1 : null;
+    };
+    // 單位：三人全互選 > 兩人互選 > 單人；互選的人永遠同組。
+    const done = new Set(), units = [];
+    Object.keys(picks).sort().forEach((a) => {
+      if (done.has(a)) return;
+      const pr = picks[a] || [], x = pr[0], y = pr[1];
+      if (!x || !y || done.has(x) || done.has(y)) return;
+      if (mutual(a, x) && mutual(a, y) && mutual(x, y)) {
+        units.push([a, x, y]); [a, x, y].forEach((i) => done.add(i));
+      }
+    });
+    Object.keys(picks).sort().forEach((a) => {
+      if (done.has(a)) return;
+      const b2 = (picks[a] || []).find((x) => !done.has(x) && x !== a && mutual(a, x));
+      if (b2) { units.push([a, b2]); done.add(a); done.add(b2); }
+    });
+    T.allStudentIds().forEach((id) => { if (!done.has(id)) units.push([id]); });
+    // 單位平均分數高→低；沒分數的墊底。
+    const us = (u) => {
+      const xs = u.map(score).filter((v) => v != null);
+      return xs.length ? xs.reduce((a2, b2) => a2 + b2, 0) / xs.length : -1;
+    };
+    units.sort((a, b) => us(b) - us(a));
+    // first-fit 由 T01 往後裝：高分單位聚前面的組、低分聚後面。
+    const ts = T.d2Teams(), counts = ts.map(() => 0), cur = {};
+    units.forEach((u) => {
+      const i = counts.findIndex((c) => c + u.length <= GCAP);
+      if (i < 0) return;
+      u.forEach((id) => { cur[id] = ts[i]; });
+      counts[i] += u.length;
+    });
+    gsave(cur); GSEL = null; renderGroup();
+  };
   $('g-clear').onclick = () => {
     if (confirm('確定清空這台裝置上的編組草稿嗎？')) { gsave({}); GSEL = null; renderGroup(); }
   };
@@ -1015,6 +1057,21 @@ function renderDay2() {
     return void (p.innerHTML = '<div class="empty">還沒有 Day2 資料。</div>');
   const { people, teamScore } = computeAll();
   let h = '';
+
+  if (DATA.vote2 && DATA.vote2.length) {
+    const tally = {};
+    DATA.vote2.forEach((r) => {
+      if (!r.subject) return;
+      const t = (tally[r.subject] = tally[r.subject] || { y: 0, n: 0 });
+      if (r.play === 'Y') t.y++; else if (r.play === 'N') t.n++;
+    });
+    h += '<h2 class="sec">想玩投票（不計分）</h2><div class="card"><div class="bars">' +
+      T.d2Teams().map((t) => {
+        const v = tally[t] || { y: 0, n: 0 }, tot = v.y + v.n;
+        return barRow(t, tot ? v.y / tot : 0,
+          tot ? (v.y + ' 想玩 / ' + tot + ' 票') : '—', 'acc');
+      }).join('') + '</div></div>';
+  }
 
   if (DATA.topic2 && DATA.topic2.length) {
     const tp = {};
@@ -1053,7 +1110,7 @@ function renderDay2() {
   if (DATA.observe2.length) {
     h += '<h2 class="sec">個人過程觀察（30%，主要訊號）</h2>' +
       '<p class="lede">六個 Lens（READ／DECONSTRUCT／DIVERGE／DECIDE／COLLABORATE／ADAPT）加權平均。' +
-      '同一人若有上午與下午兩張、或多位觀察者，取平均。</p>' +
+      '同一人若有 GATE 1 與 GATE 3 兩張、或多位觀察者，取平均。</p>' +
       '<div class="scroll"><table><thead><tr><th>候選人</th><th>D2 組</th>' +
       FIELDS.observe2.map((f) => '<th class="num">' + esc(f.label) + '</th>').join('') +
       '<th class="num">加權</th><th class="num">筆數</th></tr></thead><tbody>' +
@@ -1233,8 +1290,7 @@ function renderStatus() {
    ['topic2', 'D2 選題單（每組一張，開題時送出）'],
    ['pair1', 'D1 選兩位最想同組的人（學員，最後一段）'],
    ['mentor1', 'D1 作品集答辯評分表（每位候選人）'],
-   ['observe2', 'D2 個人過程觀察表（每組上下午各一張）'],
-   ['team2', 'D2 業師回饋單（每組一張，Final Proposal）'],
+   ['vote2', 'D2 想玩投票（全場，Final Proposal）'],
    ['self2', 'D2 自評與團隊內互評單（學員）'],
   ].forEach(([id, title]) => { h += box(title, A.progressItems(id, DATA[id])); });
 

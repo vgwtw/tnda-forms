@@ -182,6 +182,28 @@ function readTopics_() {
   return out;
 }
 
+/** 想玩投票的彙總（免金鑰）。學員匿名只計票數；
+ *  業師是公開評審，逐位回傳投哪一邊（M 開頭的 submitter）。 */
+function readVotes_() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('vote2');
+  if (!sh) return {};
+  var vals = sh.getDataRange().getValues();
+  if (vals.length < 2) return {};
+  var head = vals[0].map(String);
+  var iT = head.indexOf('subject'), iP = head.indexOf('play'), iS = head.indexOf('submitter');
+  if (iT < 0 || iP < 0) return {};
+  var out = {};
+  for (var i = 1; i < vals.length; i++) {
+    var t = String(vals[i][iT] || ''), v = String(vals[i][iP] || '');
+    var who = iS >= 0 ? String(vals[i][iS] || '') : '';
+    if (!t || !v) continue;
+    out[t] = out[t] || { y: 0, n: 0, m: {} };
+    if (who.charAt(0) === 'M') { out[t].m[who] = v; }
+    else if (v === 'Y') out[t].y++; else if (v === 'N') out[t].n++;
+  }
+  return out;
+}
+
 /* ── 讀取（給儀表板） ─────────────────────────────────── */
 
 /**
@@ -201,6 +223,7 @@ function doGet(e) {
   // 各組選的題目現場本來就會公布，業師手機不用金鑰也要看得到。
   if (action === 'roster') return json_({ ok: true, names: readRoster_() });
   if (action === 'topics') return json_({ ok: true, topics: readTopics_() });
+  if (action === 'votes') return json_({ ok: true, votes: readVotes_() });
 
   if (action !== 'ping' && READ_KEY &&
       String((e && e.parameter && e.parameter.key) || '') !== READ_KEY) {

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>想玩投票 · 揭曉</title>
+<style>
+/* 投影舞台頁：黑底大字，給電視用。只讀彙總票數（免金鑰），不碰個人資料。 */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--orange:#FF4F2C;--ink:#0E0E10;--panel:#1A1A1E;--soft:rgba(255,255,255,.55)}
+html,body{height:100%}
+body{background:var(--ink);color:#fff;overflow:hidden;
+     font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+     display:flex;flex-direction:column}
+.stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+       gap:3.5vh;padding:4vh 5vw 2vh}
+.eyebrow{font-weight:800;letter-spacing:.35em;color:var(--orange);font-size:2vh}
+.team{font-size:9vh;font-weight:900;line-height:1;letter-spacing:.04em}
+.topic{font-size:3.2vh;color:var(--soft);min-height:4vh}
+.duel{display:grid;grid-template-columns:1fr 1fr;gap:3vw;width:min(88vw,1400px)}
+.side{background:var(--panel);border:3px solid transparent;border-radius:2vh;
+      padding:4vh 2vw;text-align:center;transition:transform .3s,border-color .3s}
+.side .lb{font-size:3.4vh;font-weight:800;letter-spacing:.15em}
+.side .n{font-size:16vh;font-weight:900;line-height:1.05;font-variant-numeric:tabular-nums}
+.side.play .lb,.side.play .n{color:var(--orange)}
+.side.skip .lb,.side.skip .n{color:var(--soft)}
+.side.win{border-color:var(--orange);transform:scale(1.04);
+          animation:pulse 1.2s ease-in-out infinite alternate}
+@keyframes pulse{from{box-shadow:0 0 0 rgba(255,79,44,.0)}to{box-shadow:0 0 9vh rgba(255,79,44,.45)}}
+.bar{width:min(88vw,1400px);height:3.2vh;background:var(--panel);border-radius:99px;overflow:hidden;display:flex}
+.bar .y{background:var(--orange);width:0%;transition:width 1.2s cubic-bezier(.2,.8,.2,1)}
+.total{font-size:2.4vh;color:var(--soft)}
+.jrow{display:flex;gap:.8vw;justify-content:center;margin-top:2.4vh;min-height:6vh;flex-wrap:wrap}
+.jchip{border:2px solid var(--orange);border-radius:99px;padding:1.3vh 1.8vw;
+       font-weight:800;font-size:2.6vh;animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
+.skip .jchip{border-color:#555;color:var(--soft)}
+@keyframes pop{from{transform:scale(.2);opacity:0}}
+.rail{display:flex;gap:.8vw;justify-content:center;padding:2.2vh 2vw 2.8vh;flex-wrap:wrap}
+.rail button{font:800 2.4vh/1 inherit;color:#fff;background:var(--panel);border:2px solid #333;
+             border-radius:1.2vh;padding:1.6vh 1.6vw;cursor:pointer;letter-spacing:.06em}
+.rail button.on{background:var(--orange);border-color:var(--orange);color:#fff}
+.rail button .dot{display:inline-block;width:1vh;height:1vh;border-radius:99px;
+                  background:var(--orange);margin-left:.6vw;vertical-align:middle}
+.rail button.on .dot{background:#fff}
+.reveal{font:900 3vh/1 inherit;letter-spacing:.2em;color:var(--ink);background:var(--orange);
+        border:0;border-radius:99px;padding:2.2vh 4vw;cursor:pointer}
+.reveal:disabled{opacity:.35;cursor:default}
+.hint{position:fixed;top:1.6vh;right:2vw;font-size:1.7vh;color:#444}
+.q{color:#333}
+</style>
+</head>
+<body>
+<div class="hint" id="hint"></div>
+<div class="stage">
+  <div class="eyebrow">DAY 2 · 想玩投票</div>
+  <div class="team" id="team">第＿＿組</div>
+  <div class="topic" id="topic"></div>
+  <div class="duel">
+    <div class="side play" id="sideY"><div class="lb">想　玩</div><div class="n" id="ny">–</div>
+      <div class="jrow" id="jy"></div></div>
+    <div class="side skip" id="sideN"><div class="lb">還不想</div><div class="n" id="nn">–</div>
+      <div class="jrow" id="jn"></div></div>
+  </div>
+  <div class="bar"><div class="y" id="fill"></div></div>
+  <div class="total" id="total"></div>
+</div>
+<div class="rail" id="rail"></div>
+
+<script src="config.js?v=b1499829"></script>
+<script src="app.js?v=d139e532"></script>
+<script>
+(() => {
+'use strict';
+const T = window.TNDA, A = window.APP;
+const $ = (id) => document.getElementById(id);
+
+/* 開票直播：不等收齊、沒有揭曉鍵。票一進來就 +1，
+   業師一投馬上翻牌站邊。換組時數字從 0 滾上來當入場。 */
+let VOTES = {}, TOPICS = {}, SEL = null;
+let SHOWN = { y: 0, n: 0, ms: {} };   // 目前畫面上已呈現的狀態
+
+const mname = (m) => T.nameOf(m);
+const split = (v) => {
+  const ms = Object.keys(v.m || {}).sort();
+  const my = ms.filter((k) => v.m[k] === 'Y'), mn = ms.filter((k) => v.m[k] === 'N');
+  return { my, mn, y: v.y + my.length, n: v.n + mn.length, tot: v.y + v.n + ms.length };
+};
+/** 這一組總共有幾張票可投：全體學員（扣掉自己組的人）＋當天業師。 */
+const eligible = (t) =>
+  T.allStudentIds().length - T.teamMembers(t).length + T.mentorIdsForDay(2).length;
+
+/** 數字從 from 滾到 to。每個元素同時只跑一條動畫（新的蓋掉舊的）。 */
+function roll(el, from, to, ms) {
+  if (from === to) { el.textContent = String(to); return; }
+  const t0 = performance.now(), token = (el._tok = (el._tok || 0) + 1);
+  const tick = (now) => {
+    if (el._tok !== token) return;
+    const p2 = Math.min(1, (now - t0) / ms);
+    el.textContent = String(Math.round(from + (to - from) * (1 - Math.pow(1 - p2, 3))));
+    if (p2 < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+function rail() {
+  $('rail').innerHTML = T.d2Teams().map((t) => {
+    const v = VOTES[t], k = v ? split(v) : null;
+    return '<button data-t="' + t + '" class="' + (SEL === t ? 'on' : '') + '">' + t +
+      ((k && k.tot > 0) ? '<span class="dot"></span>' : '') + '</button>';
+  }).join('');
+  document.querySelectorAll('.rail button').forEach((b) => {
+    b.onclick = () => {
+      SEL = b.dataset.t;
+      SHOWN = { y: 0, n: 0, ms: {} };            // 從 0 開始滾，換組有進場感
+      $('jy').innerHTML = ''; $('jn').innerHTML = '';
+      paint(true);
+    };
+  });
+}
+
+function paint(entering) {
+  rail();
+  if (!SEL) return;
+  $('team').textContent = '第 ' + parseInt(SEL.slice(1), 10) + ' 組';
+  const tp = TOPICS[SEL];
+  $('topic').textContent = tp ? A.cardLabel(tp).replace(/^C\d+　/, '') : '';
+  const v = VOTES[SEL] || { y: 0, n: 0, m: {} };
+  const k = split(v);
+
+  roll($('ny'), SHOWN.y, k.y, entering ? 1200 : 500);
+  roll($('nn'), SHOWN.n, k.n, entering ? 1200 : 500);
+
+  // 業師：只補新出現的牌，已在牆上的不動。
+  Object.keys(v.m || {}).sort().forEach((m) => {
+    if (SHOWN.ms[m]) return;
+    const el = $(v.m[m] === 'Y' ? 'jy' : 'jn');
+    el.insertAdjacentHTML('beforeend',
+      '<span class="jchip" data-m="' + A.esc(m) + '">' + A.esc(mname(m)) + '</span>');
+  });
+
+  const pct = k.tot ? Math.round(k.y / k.tot * 100) : 0;
+  $('fill').style.width = pct + '%';
+  const cap = eligible(SEL);
+  $('total').innerHTML = '已收 <b>' + k.tot + '</b> / ' + cap + ' 票' +
+    (k.tot >= cap ? ' · 全數到齊' : ' · 還有 ' + (cap - k.tot) + ' 票');
+  $('sideY').classList.toggle('win', k.tot > 0 && k.y >= k.n);
+  $('sideN').classList.toggle('win', k.tot > 0 && k.n > k.y);
+
+  SHOWN = { y: k.y, n: k.n, ms: Object.assign({}, v.m || {}) };
+}
+
+async function pull() {
+  try {
+    const res = await fetch(T.ENDPOINT + (T.ENDPOINT.includes('?') ? '&' : '?') + 'action=votes');
+    const d = await res.json();
+    if (d.ok && d.votes) VOTES = d.votes;
+    $('hint').textContent = '';
+  } catch (e) { $('hint').textContent = '連線中斷，畫面是最後一次抓到的票數'; }
+  paint(false);
+}
+
+A.fetchTopics().then((t) => { TOPICS = t; paint(false); });
+A.syncNames().then(() => paint(false));   // 業師名字（M2 → 李季弦）
+pull();
+setInterval(pull, 2500);
+})();
+</script>
+</body>
+</html>

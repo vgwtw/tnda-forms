@@ -83,6 +83,18 @@ const MENTORS = [
 ];
 
 
+/* ②-b ─── Day2 主責分工 ───────────────────────────────────────
+   每組固定兩位 Assigned Reviewers（對齊業師行前簡報第 8 頁）。
+   Day2 的觀察表與回饋單，組別下拉只列出自己主責的組。
+   現場要換組直接改這裡＋蓋版本＋push；沒列到的業師會看到全部組（保險）。 */
+const ASSIGN = {
+  M2: ['T01', 'T02', 'T03', 'T04', 'T05'],
+  M3: ['T01', 'T02', 'T06', 'T07', 'T08'],
+  M4: ['T03', 'T04', 'T06', 'T09', 'T10'],
+  M5: ['T05', 'T07', 'T08', 'T09', 'T10'],
+};
+
+
 /* ③ ─── 表單 ──────────────────────────────────────────────────
    每份表單分成四段，任何一段都可以省略：
      head  只填一次的抬頭（組別、題目、時段…）
@@ -247,19 +259,20 @@ const FORMS = {
     },
   },
 
-  /* ── Day2 · 個人解題過程觀察表（業師填，30%） ────────────
-     六個 Lens 對齊 Reviewer Brief：READ／DECONSTRUCT／DIVERGE／
-     DECIDE／COLLABORATE／ADAPT。上午（探索＋GATE 01）與下午
-     （發展＋GATE 02、03）各交一張，同一人多張、多位觀察者取平均。 */
+  /* ── Day2 · 個人解題過程觀察表 ——【退役】────────────────
+     業師 Day2 改用紙本觀察表（每組一張 A4，製作觀察表.py 產生），
+     電子版不再收件。定義保留是為了讓舊資料照樣讀得出來。 */
   observe2: {
+    retired: true,
     day: 2, role: 'mentor', weightLabel: '30%　主要訊號',
     eyebrow: 'DAY 2 · PROCESS OBSERVATION',
     title: '個人解題過程觀察表',
-    brief: '每組上午、下午各交一張，各項 1–5。',
+    brief: '主責的每一組，GATE 1、GATE 3 各交一張，各項 1–5。',
     head: [
-      { k: 'team', type: 'pick', label: '組別', optionsFrom: 'd2-teams', required: true, key: true },
-      { k: 'slot', type: 'pick', label: '時段', options: ['上午', '下午'], required: true, key: true,
-        hint: '上午＝自由探索＋GATE 01；下午＝方案發展＋GATE 02、03' },
+      { k: 'team', type: 'pick', label: '組別（你主責的）', optionsFrom: 'assigned-teams',
+        required: true, key: true },
+      { k: 'slot', type: 'pick', label: 'Gate', options: ['GATE 1', 'GATE 3'],
+        required: true, key: true },
     ],
     per: {
       scope: 'd2-members',
@@ -282,13 +295,15 @@ const FORMS = {
      面向對齊題目：SOURCE CHARACTER → ESSENCE → PLAYER ACTION →
      FIGHTING LANGUAGE。 */
   team2: {
+    retired: true,
     day: 2, role: 'mentor', weightLabel: '15%',
     eyebrow: 'DAY 2 · TEAM OUTPUT',
     title: '業師回饋單',
     brief: '每組一張，Final Proposal 講評時填。',
     subjectFrom: 'team',
     head: [
-      { k: 'team', type: 'pick', label: '組別', optionsFrom: 'd2-teams', required: true, key: true },
+      { k: 'team', type: 'pick', label: '組別（你主責的）', optionsFrom: 'assigned-teams',
+        required: true, key: true },
       { k: 'character', type: 'pick', label: '來源角色', optionsFrom: 'cards:topic',
         hint: '跟選題單不一樣就照實際做的選。' },
     ],
@@ -301,6 +316,30 @@ const FORMS = {
         { k: 'strength', type: 'memo', label: '亮點' },
         { k: 'gap',      type: 'memo', label: '主要問題' },
         { k: 'next',     type: 'memo', label: '若多兩小時，先改什麼', accent: true },
+      ],
+    },
+  },
+
+  /* ── Day2 · 想玩投票（全場都填，0%） ─────────────────────
+     Final Proposal 每組提報完，憑直覺按一票：這個鬥士做出來你想不想玩。
+     業師與學員都投；學員不投自己那組。不計分，當眾公布與否由主辦決定。 */
+  vote2: {
+    day: 2, role: 'all', weightLabel: '不計分',
+    eyebrow: 'DAY 2 · AUDIENCE VOTE',
+    title: '想玩投票',
+    brief:
+      '每一組提報完按一票：<strong>這個鬥士做出來，你想不想玩？</strong>' +
+      '憑直覺，<strong>不計入錄取分數</strong>。',
+    per: {
+      scope: 'vote-teams',
+      requires: 'play',
+      fields: [
+        { k: 'play', type: 'choice', label: '想玩嗎？', options: [
+          { v: 'Y', label: '想玩', hint: '做出來我會想玩玩看' },
+          { v: 'N', label: '還不想', hint: '目前還沒被說服' },
+        ] },
+        { k: 'why', type: 'text', label: '一句話（選填）', max: 40,
+          placeholder: '最想玩／最卡的一點是…' },
       ],
     },
   },
@@ -424,13 +463,12 @@ const SCHEDULE = {
       { from: '11:30', to: '12:00', label: 'GATE 01｜階段 Review', key: true,
         note: '各組輪流接受第一次階段 Review',
         you: '輪到你們時，說明目前的理解與依據',
-        todo: ['主問照分工：真正要解決什麼？Evidence 是什麼？'] },
+        todo: ['主問照分工：真正要解決什麼？Evidence 是什麼？', '紙本觀察表記 GATE 1'] },
 
       { from: '12:00', to: '13:00', label: '午休',
         note: '自理',
         you: '下午從方案發展繼續',
-        todo: ['交換上午觀察', '填觀察表（時段：上午）'],
-        forms: ['observe2'] },
+        todo: ['交換上午觀察、補完 GATE 1 紙本'] },
 
       { from: '13:00', to: '14:00', label: 'Open Develop｜方案發展', key: true,
         note: '延續研究、修正方向並發展設計',
@@ -450,19 +488,19 @@ const SCHEDULE = {
       { from: '15:00', to: '15:30', label: 'GATE 03｜階段 Review', key: true,
         note: '各組接受第二次階段 Review',
         you: '輪到你們時，說明目前的方案與依據',
-        todo: ['換另一位主問，Challenge 核心假設'] },
+        todo: ['換另一位主問，Challenge 核心假設', '紙本觀察表記 GATE 3'] },
 
       { from: '15:30', to: '16:00', label: 'Finalize｜整理與收斂',
         note: '整理手上的材料，準備最終提案',
         you: '研究、草圖、比較過的方向都是你們的 Evidence，不用藏',
-        todo: ['停止巡組，交換 Evidence', '填觀察表（時段：下午）'],
-        forms: ['observe2'] },
+        todo: ['停止巡組，交換 Evidence、補完 GATE 3 紙本'] },
 
       { from: '16:00', to: '17:00', label: 'Final Proposal｜最終提案', key: true,
         note: '呈現形式現場宣布',
-        you: '依現場宣布的形式提案；輪空時填自評與團隊內互評單',
-        todo: ['每組講評完填業師回饋單', '證據不足的學生優先指定發言'],
-        forms: ['team2', 'self2'] },
+        you: '每組提報完投「想玩投票」；輪空時填自評與團隊內互評單',
+        todo: ['每組提報完，全場投想玩投票', '證據不足的學生優先指定發言'],
+        links: [{ href: 'votes.html', label: '揭曉舞台（投影）' }],
+        forms: ['vote2', 'self2'] },
     ],
   },
 };
@@ -472,10 +510,10 @@ const SCHEDULE = {
    錄取總分＝三個來源加權。每個來源先把 1–5 的加權平均換算成 0–100。
    同儕評價與自評互評佔 0%，只當訊號，不進總分。 */
 
+/* Day2 改紙本觀察後，線上計分只剩 D1 答辯；Day2 的評鑑由業師
+   紙本與合議會議處理，不在系統內加權。 */
 const SCORING = [
-  { form: 'mentor1',  weight: 0.55, label: 'D1 作品集答辯' },
-  { form: 'observe2', weight: 0.30, label: 'D2 個人過程觀察' },
-  { form: 'team2',    weight: 0.15, label: 'D2 團隊成果' },
+  { form: 'mentor1', weight: 1.0, label: 'D1 作品集答辯' },
 ];
 
 
@@ -550,8 +588,11 @@ function problems() {
   return out;
 }
 
+/** 業師主責的組。沒設定的（或學員誤入）回傳全部組，寧可多列不要擋死。 */
+const assignedTeams = (id) => (ASSIGN[id] && ASSIGN[id].length) ? ASSIGN[id].slice() : d2Teams();
+
 return {
-  ENDPOINT, STUDENTS, MENTORS, FORMS, SCORING, SCHEDULE, CARDS,
+  ENDPOINT, STUDENTS, MENTORS, FORMS, SCORING, SCHEDULE, CARDS, ASSIGN, assignedTeams,
   person, nameOf, labelOf, isKnown, problems, applyNames,
   hasName, namesReady, missingNames,
   d1Groups, d2Teams, studentsIn, teamMembers,
