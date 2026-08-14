@@ -45,7 +45,8 @@ function entryHTML(role) {
     html += '<div class="day"><span>' + day + '</span><span>DAY ' + day + '</span></div>';
     ids.forEach((id) => {
       const f = T.FORMS[id];
-      html += '<a class="entry" href="form.html?f=' + encodeURIComponent(id) + '">' +
+      const extra = (f.role === 'all' && role === 'mentor') ? '&who=m' : '';
+      html += '<a class="entry" href="form.html?f=' + encodeURIComponent(id) + extra + '">' +
         '<div class="top"><span class="nm">' + esc(f.title) + '</span>' +
         '<span class="wt">' + esc(f.weightLabel) + '</span></div>' +
         '<div class="sub">' + esc(ENTRY_DESC[id] || '') + '</div></a>';

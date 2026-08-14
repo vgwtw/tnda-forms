@@ -32,7 +32,7 @@
 </div>
 
 <script src="config.js?v=2b648138"></script>
-<script src="app.js?v=f12bffc2"></script>
+<script src="app.js?v=e4e5808b"></script>
 <script>
 (() => {
 'use strict';
@@ -232,14 +232,14 @@ function renderSetup() {
     v.appendChild(n);
   }
 
-  const meLabel = F.role === 'mentor'
+  // role:'all'（想玩投票）看入口決定名單：業師入口的連結帶 who=m 只列業師，
+  // 學員頁的連結不帶＝只列學員——**學員頁上不出現業師身分**。
+  const asMentor = F.role === 'mentor' || (F.role === 'all' && QS.get('who') === 'm');
+  const meLabel = asMentor
     ? '你是哪位業師（DAY ' + F.day + '）'
     : '你是誰（對照名牌上的編號）';
   // 業師兩天不同人，只列出這份表單那一天出席的那幾位。
-  // role:'all'（想玩投票）＝學員＋當天業師都能選。
-  const pool = F.role === 'mentor' ? T.mentorIdsForDay(F.day)
-    : F.role === 'all' ? T.allStudentIds().concat(T.mentorIdsForDay(F.day))
-    : T.allStudentIds();
+  const pool = asMentor ? T.mentorIdsForDay(F.day) : T.allStudentIds();
 
   /* 掃自己的 QR 進來就已經認過人了，不用再從一長串裡挑一次——
      那一步正是「填到別人身上」的來源。已認人時只顯示一行確認，

@@ -68,7 +68,7 @@
 </div>
 
 <script src="config.js?v=2b648138"></script>
-<script src="app.js?v=f12bffc2"></script>
+<script src="app.js?v=e4e5808b"></script>
 <script>
 (() => {
 'use strict';
@@ -148,7 +148,9 @@ function blockHTML(b) {
 /** 一份表單的按鈕：點了直接開，後面是收了幾份。虛線＝學員填的。 */
 function formChip(id) {
   const stu = T.FORMS[id].role === 'student' ? ' stu' : '';
-  const href = 'form.html?f=' + encodeURIComponent(id) + '&day=' + encodeURIComponent(DAY);
+  let href = 'form.html?f=' + encodeURIComponent(id) + '&day=' + encodeURIComponent(DAY);
+  // 全員表單（想玩投票）從業師端點進去要列業師名單，不能看到學員頁那份。
+  if (T.FORMS[id].role === 'all') href += '&who=m';
   const label = esc(A.PROGRESS_LABEL[id] || id);
   if (!DATA) return '<a class="wchip' + stu + '" href="' + href + '">' + label + '</a>';
   const p = A.progressOf(id, DATA[id]);
