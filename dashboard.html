@@ -285,7 +285,7 @@ code{background:var(--s2);color:var(--fg2)}
 </div>
 
 <script src="config.js?v=1662e704"></script>
-<script src="app.js?v=856a672d"></script>
+<script src="app.js?v=98ad2e67"></script>
 <script>
 (() => {
 'use strict';
@@ -1390,6 +1390,7 @@ function renderExport() {
 
 /* ════ 載入 ═══════════════════════════════════════════════ */
 function setData(d, source) {
+  A.fixIds(d);   // 試算表把「01」存成數字 1——三個來源（後端／CSV／示範）都在這裡補零
   Object.keys(DATA).forEach((k) => { DATA[k] = (d[k] || []).map(norm); });
   PEER_CACHE = null;
   const n = Object.values(DATA).reduce((a, b) => a + b.length, 0);

@@ -359,6 +359,21 @@ const readKey = {
   set(v) { try { localStorage.setItem('tnda:readkey', v || ''); } catch (e) { /* private mode */ } },
 };
 
+/** 試算表會把「01」這種編號存成數字 1，讀回來就對不上名單的 01–09。
+ *  所有裝著人員編號的欄位在這裡統一補零＋轉字串——
+ *  fetchAll（儀表板、run.html）與儀表板的 CSV 匯入都要過這一關。 */
+const ID_COLS = ['submitter', 'subject', 'candidate', 'choice', 'choice2'];
+function fixIds(data) {
+  Object.values(data || {}).forEach((rows) => (rows || []).forEach((r) => {
+    ID_COLS.forEach((k) => {
+      if (r[k] === undefined || r[k] === null || r[k] === '') return;
+      const v = String(r[k]);
+      r[k] = /^\d$/.test(v) ? '0' + v : v;
+    });
+  }));
+  return data;
+}
+
 /** 從後端抓資料。需要讀取金鑰；回傳 {peer1:[], mentor1:[], …}。 */
 async function fetchAll() {
   if (!T.ENDPOINT) throw new Error('config.js 的 ENDPOINT 還沒填。');
@@ -367,7 +382,7 @@ async function fetchAll() {
   const d = await res.json();
   if (d.error === 'unauthorized') throw new Error('讀取金鑰不對，對一下 apps-script.gs 裡的 READ_KEY。');
   if (!d.ok) throw new Error(d.error || '回應格式不符');
-  return d.data || {};
+  return fixIds(d.data || {});
 }
 
 /** 儀表板改名字用。寫入要金鑰。 */
@@ -385,7 +400,7 @@ async function saveNames(map) {
   return d;
 }
 
-return { esc, guard, entryHTML, readKey, fetchAll, fetchTopics, progressItems, progressOf, PROGRESS_LABEL,
+return { esc, guard, entryHTML, readKey, fetchAll, fetchTopics, fixIds, progressItems, progressOf, PROGRESS_LABEL,
          draft, scopeList, optionList, cardLabel, columnsOf, submit, confirmSend,
          mountBack, formsFor, lock, syncNames, saveNames, nameNotice, claimIdentity,
          toCSV, parseCSV, download, mean, median, weighted100 };
