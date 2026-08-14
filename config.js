@@ -323,18 +323,23 @@ const FORMS = {
   /* ── Day2 · 想玩投票（全場都填，0%） ─────────────────────
      Final Proposal 每組提報完，憑直覺按一票：這個鬥士做出來你想不想玩。
      業師與學員都投；學員不投自己那組。不計分，當眾公布與否由主辦決定。 */
+  /* 一組一票、一票一送：提報是一組接一組進行的，投完就送、
+     下一組提報完再進來投——所以組別是 key，鎖是鎖「這一組的票」。 */
   vote2: {
     day: 2, role: 'all', weightLabel: '不計分',
     eyebrow: 'DAY 2 · AUDIENCE VOTE',
     title: '想玩投票',
     brief:
-      '每一組提報完按一票：<strong>這個鬥士做出來，你想不想玩？</strong>' +
-      '憑直覺，<strong>不計入錄取分數</strong>。',
-    per: {
-      scope: 'vote-teams',
-      requires: 'play',
+      '哪一組剛提報完就投哪一組：<strong>這個鬥士做出來，你想不想玩？</strong>' +
+      '一組一票、投完送出，下一組提報完再進來。<strong>不計入錄取分數</strong>。',
+    subjectFrom: 'team',
+    head: [
+      { k: 'team', type: 'pick', label: '剛提報完的組', optionsFrom: 'vote-teams',
+        required: true, key: true },
+    ],
+    self: {
       fields: [
-        { k: 'play', type: 'choice', label: '想玩嗎？', options: [
+        { k: 'play', type: 'choice', label: '想玩嗎？', required: true, options: [
           { v: 'Y', label: '想玩', hint: '做出來我會想玩玩看' },
           { v: 'N', label: '還不想', hint: '目前還沒被說服' },
         ] },
@@ -497,7 +502,7 @@ const SCHEDULE = {
 
       { from: '16:00', to: '17:00', label: 'Final Proposal｜最終提案', key: true,
         note: '呈現形式現場宣布',
-        you: '每組提報完投「想玩投票」；輪空時填自評與團隊內互評單',
+        you: '每組提報完投「想玩投票」（一組一票、投完送出）；輪空時填自評與互評',
         todo: ['每組提報完，全場投想玩投票', '證據不足的學生優先指定發言'],
         links: [{ href: 'votes.html', label: '揭曉舞台（投影）' }],
         forms: ['vote2', 'self2'] },

@@ -180,6 +180,11 @@ function optionList(from, me) {
   if (from === 'mentors-day2')      return asPeople(T.mentorIdsForDay(2));
   if (from === 'd1-groups')         return T.d1Groups().map((g) => ({ v: g, label: g }));
   if (from === 'd2-teams')          return T.d2Teams().map((t) => ({ v: t, label: t }));
+  // 想玩投票的組別：學員跳過自己那組，業師全部都能投。
+  if (from === 'vote-teams') {
+    const mine = T.d2TeamOf(me);
+    return T.d2Teams().filter((t) => t !== mine).map((t) => ({ v: t, label: t }));
+  }
   // 業師主責的組——Day2 觀察表與回饋單用。
   if (from === 'assigned-teams') return T.assignedTeams(me).map((t) => ({ v: t, label: t }));
   // 只有「我自己那一組」——選題單用，別組的題目不干你的事。

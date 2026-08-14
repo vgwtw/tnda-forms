@@ -192,15 +192,21 @@ function readVotes_() {
   var head = vals[0].map(String);
   var iT = head.indexOf('subject'), iP = head.indexOf('play'), iS = head.indexOf('submitter');
   if (iT < 0 || iP < 0) return {};
-  var out = {};
+  // 同一人對同一組投多次時取最新一列（改成一組一票制之前的舊票不會重複計）。
+  var latest = {};
   for (var i = 1; i < vals.length; i++) {
     var t = String(vals[i][iT] || ''), v = String(vals[i][iP] || '');
-    var who = iS >= 0 ? String(vals[i][iS] || '') : '';
+    var who = iS >= 0 ? String(vals[i][iS] || '') : ('row' + i);
     if (!t || !v) continue;
-    out[t] = out[t] || { y: 0, n: 0, m: {} };
-    if (who.charAt(0) === 'M') { out[t].m[who] = v; }
-    else if (v === 'Y') out[t].y++; else if (v === 'N') out[t].n++;
+    latest[who + '|' + t] = { t: t, who: who, v: v };
   }
+  var out = {};
+  Object.keys(latest).forEach(function (k) {
+    var r = latest[k];
+    out[r.t] = out[r.t] || { y: 0, n: 0, m: {} };
+    if (r.who.charAt(0) === 'M') { out[r.t].m[r.who] = r.v; }
+    else if (r.v === 'Y') out[r.t].y++; else if (r.v === 'N') out[r.t].n++;
+  });
   return out;
 }
 
