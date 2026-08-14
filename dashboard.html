@@ -684,19 +684,24 @@ function renderPeer() {
       '<span>一票約 ' + Math.round(100 / (ps[0].received || 14)) + ' 個百分點，不要過度解讀小差距</span>' +
       '</div></div>';
 
-    const tot = {};
-    DATA.peer1.forEach((r) => {
-      if (T.d1GroupOf(r.subject) !== g) return;
-      String(r.reasons || '').split('|').filter(Boolean).forEach((c) => { tot[c] = (tot[c] || 0) + 1; });
-    });
-    const max = Math.max(1, ...Object.values(tot));
-    h += '<h2 class="sec">' + esc(g) + ' — 這一組「看見了什麼」</h2>' +
-      '<p class="lede">G（尚未看見足夠證據）偏高代表發表時間或曝光不足，' +
-      '處置方式是給舞台，不是扣分。</p>' +
-      '<div class="card"><div class="bars">' +
-      Object.values(RMAP).map((o) => barRow('<b>' + o.v + '</b>' + esc(o.label),
-        (tot[o.v] || 0) / max, (tot[o.v] || 0) + ' 次', o.positive ? 'acc' : 'mut', true)).join('') +
-      '</div></div>';
+    /* 「這一組看見了什麼」（理由 A–H 的次數分布）依主辦要求先隱藏。
+       資料照收，要看的話把 SHOW_REASONS 改成 true 即可。 */
+    const SHOW_REASONS = false;
+    if (SHOW_REASONS) {
+      const tot = {};
+      DATA.peer1.forEach((r) => {
+        if (T.d1GroupOf(r.subject) !== g) return;
+        String(r.reasons || '').split('|').filter(Boolean).forEach((c) => { tot[c] = (tot[c] || 0) + 1; });
+      });
+      const max = Math.max(1, ...Object.values(tot));
+      h += '<h2 class="sec">' + esc(g) + ' — 這一組「看見了什麼」</h2>' +
+        '<p class="lede">G（尚未看見足夠證據）偏高代表發表時間或曝光不足，' +
+        '處置方式是給舞台，不是扣分。</p>' +
+        '<div class="card"><div class="bars">' +
+        Object.values(RMAP).map((o) => barRow('<b>' + o.v + '</b>' + esc(o.label),
+          (tot[o.v] || 0) / max, (tot[o.v] || 0) + ' 次', o.positive ? 'acc' : 'mut', true)).join('') +
+        '</div></div>';
+    }
   });
 
   h += '<h2 class="sec">Day 2 分組配對</h2>' +
