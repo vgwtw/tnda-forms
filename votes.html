@@ -77,6 +77,8 @@ const $ = (id) => document.getElementById(id);
 
 /* 開票直播：不等收齊、沒有揭曉鍵。票一進來就 +1，
    業師一投馬上翻牌站邊。換組時數字從 0 滾上來當入場。 */
+/* ?demo=1 ＝示範模式：不連後端，假票每秒流入，投影前排練用。 */
+const DEMO = new URLSearchParams(location.search).get('demo');
 let VOTES = {}, TOPICS = {}, SEL = null;
 let SHOWN = { y: 0, n: 0, ms: {} };   // 目前畫面上已呈現的狀態
 
@@ -150,7 +152,25 @@ function paint(entering) {
   SHOWN = { y: k.y, n: k.n, ms: Object.assign({}, v.m || {}) };
 }
 
+function demoTick() {
+  const ts = T.d2Teams();
+  // 亂數只用在示範畫面，不碰任何真資料。
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  for (let i = 0; i < 2; i++) {
+    const t = SEL && Math.random() < 0.7 ? SEL : pick(ts);
+    const v = (VOTES[t] = VOTES[t] || { y: 0, n: 0, m: {} });
+    if (v.y + v.n >= 25) continue;
+    if (Math.random() < 0.65) v.y++; else v.n++;
+  }
+  if (SEL && Math.random() < 0.25) {
+    const v = (VOTES[SEL] = VOTES[SEL] || { y: 0, n: 0, m: {} });
+    const m = pick(['M2', 'M3', 'M4', 'M5'].filter((x) => !v.m[x]));
+    if (m) v.m[m] = Math.random() < 0.7 ? 'Y' : 'N';
+  }
+}
+
 async function pull() {
+  if (DEMO) { demoTick(); paint(false); return; }
   try {
     const res = await fetch(T.ENDPOINT + (T.ENDPOINT.includes('?') ? '&' : '?') + 'action=votes');
     const d = await res.json();
@@ -160,10 +180,16 @@ async function pull() {
   paint(false);
 }
 
-A.fetchTopics().then((t) => { TOPICS = t; paint(false); });
-A.syncNames().then(() => paint(false));   // 業師名字（M2 → 李季弦）
+if (DEMO) {
+  T.applyNames({ M2: '李季弦', M3: '王彥凱', M4: '孫唯瑄', M5: '高偉傑' });
+  TOPICS = { T01: 'C05', T02: 'C06', T03: 'C07', T04: 'C01', T05: 'C03' };
+  document.getElementById('hint').textContent = '示範模式（假資料）';
+} else {
+  A.fetchTopics().then((t) => { TOPICS = t; paint(false); });
+  A.syncNames().then(() => paint(false));   // 業師名字（M2 → 李季弦）
+}
 pull();
-setInterval(pull, 2500);
+setInterval(pull, DEMO ? 1100 : 2500);
 })();
 </script>
 </body>
