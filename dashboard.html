@@ -222,6 +222,40 @@ code{background:var(--s2);color:var(--fg2)}
   .shell{display:block}
   .split .list{display:none}
 }
+
+/* ── 個人回饋單（發放版）：每人一張 A4 ──
+   發到學員手上的版本，合議決定的內容規則：
+   不放業師評語與業師姓名、不放 Day2 的任何活動與評分。
+   螢幕上看不到，按「列印發放版」才會生出來直接進列印。 */
+#handout{display:none}
+@media print{
+  body.handout .shell{display:none}
+  body.handout #handout{display:block}
+}
+#handout .hcard{page-break-after:always;color:#141414;background:#fff;
+  padding:4mm 2mm;display:flex;flex-direction:column;min-height:255mm}
+#handout .hey{font:700 10px/1.2 var(--font-display);letter-spacing:.18em;color:var(--tnda-orange)}
+#handout h3{margin:2mm 0 0;font:700 27px/1.2 var(--font-body)}
+#handout .hsub{font-size:12px;color:#666;margin-top:1.5mm}
+#handout .hscore{display:flex;align-items:baseline;gap:12px;
+  border-top:3px solid #141414;margin-top:5mm;padding-top:4mm}
+#handout .hscore b{font:400 42px/1 var(--font-display)}
+#handout .hscore span{font-size:12px;color:#666}
+#handout .hsec{font:700 13px/1.2 var(--font-body);margin:7mm 0 0;
+  padding-bottom:2.5mm;border-bottom:2px solid #141414}
+#handout .hrow{display:grid;grid-template-columns:1fr auto 52px;gap:12px;align-items:center;
+  padding:3mm 0;border-bottom:1px solid #E4E4E4;font-size:13px}
+#handout .hdots{display:flex;gap:4px}
+#handout .hdots i{width:9mm;height:3.4mm;background:#ECECEC;
+  print-color-adjust:exact;-webkit-print-color-adjust:exact}
+#handout .hdots i.on{background:#141414}
+#handout .hn{font:400 12px/1 var(--font-display);text-align:right;white-space:nowrap}
+#handout .hpeer{font-size:13px;line-height:1.7;padding:3mm 0;border-bottom:1px solid #E4E4E4}
+#handout .hq{font-size:13px;line-height:1.7;padding:2.6mm 0;border-bottom:1px solid #E4E4E4}
+#handout .hq::before{content:"「"}
+#handout .hq::after{content:"」"}
+#handout .hfoot{margin-top:auto;padding-top:6mm;font-size:10.5px;color:#8A8A8A;line-height:1.7;
+  display:flex;justify-content:space-between;gap:20px}
 </style>
 </head>
 <body>
@@ -1160,10 +1194,13 @@ function renderBrief() {
     '<p class="lede">每位候選人一張，對應紙本「個人回饋摘要」那一頁。' +
     '左側白線＝有需要業師主動處理的訊號。<b>業師寫的每一句都標了是誰寫的</b>，' +
     '合議時問得出「這句是誰看到的」；<b>同儕亮點句一律匿名</b>，那是對學員的承諾。</p>' +
-    '<div class="row-actions"><button class="btn primary inline" id="brief-text">' +
-    '產生全部文字（可貼進回饋單）</button>' +
-    '<label class="sw"><input type="checkbox" id="brief-anon"> 文字裡不要標業師姓名</label>' +
-    '<span class="stamp">要發給候選人時可以勾起來</span></div><div id="brief-out"></div>';
+    '<div class="row-actions"><button class="btn primary inline" id="brief-print">' +
+    '列印發放版（每人一張 A4）</button>' +
+    '<span class="stamp">發放版＝給學員的：不含業師評語與姓名、不含 Day2 的活動與評分</span>' +
+    '<span style="flex:1"></span>' +
+    '<button class="btn inline" id="brief-text">產生全部文字（內部合議用）</button>' +
+    '<label class="sw"><input type="checkbox" id="brief-anon"> 文字不標業師姓名</label>' +
+    '</div><div id="brief-out"></div>';
 
   h += '<div class="grid g2" style="margin-top:20px">';
   Object.values(people).sort(byId).forEach((x) => {
@@ -1217,6 +1254,48 @@ function renderBrief() {
   });
   h += '</div>';
   p.innerHTML = h;
+
+  /* 發放版：每人一張 A4。只放 Day1 答辯評分（不標業師名）與同儕匿名回饋；
+     業師的文字評語、追問紀錄、Day2 的一切都不進來——合議定案的規則。 */
+  $('brief-print').onclick = () => {
+    // 特質只列正面的（G「看不出個人能力」那類是內部訊號，不進學員手上的紙）。
+    const RMAP = {};
+    T.FORMS.peer1.per.fields.find((f) => f.k === 'reasons').options
+      .forEach((o) => { if (o.positive) RMAP[o.v] = o.label; });
+    let el = document.getElementById('handout');
+    if (!el) { el = document.createElement('div'); el.id = 'handout'; document.body.appendChild(el); }
+    el.innerHTML = Object.values(people).sort(byId).map((x) => {
+      const peer = peerOf(x.id);
+      if (x.total == null && !(peer && peer.received)) return '';   // 沒來的人不印
+      const dims = (x.detail.mentor1 || []).map((d) =>
+        '<div class="hrow"><span>' + esc(d.f.label) + '</span>' +
+        '<span class="hdots">' + [1, 2, 3, 4, 5].map((i) =>
+          '<i class="' + (d.v != null && Math.round(d.v) >= i ? 'on' : '') + '"></i>').join('') +
+        '</span><span class="hn">' + n1(d.v) + ' / 5</span></div>').join('');
+      const top = (peer && peer.received)
+        ? Object.entries(peer.reasons).filter(([c]) => RMAP[c])
+            .sort((a, b) => b[1] - a[1]).slice(0, 2).map(([c]) => RMAP[c]) : [];
+      return '<div class="hcard">' +
+        '<div class="hey">TNDA 前導甄選 · 個人回饋摘要</div>' +
+        '<h3>' + esc(x.name || x.id) + '</h3>' +
+        '<div class="hsub">' + esc(x.id) + '　·　' + esc(x.d1 || '') + '</div>' +
+        '<div class="hscore"><b>' + n1(x.total) + '</b>' +
+        '<span>Day 1 答辯評分（100 分制）</span></div>' +
+        (dims ? '<div class="hsec">Day 1 答辯 · 六個面向（1–5）</div>' + dims : '') +
+        ((peer && peer.received)
+          ? '<div class="hsec">同組夥伴的匿名回饋</div>' +
+            '<div class="hpeer">' + peer.yes + ' / ' + peer.received +
+            ' 位同組夥伴表示願意再一起工作' +
+            (top.length ? '，最常被指認的特質：<b>' + top.map(esc).join('、') + '</b>' : '') + '</div>' +
+            peer.quotes.slice(0, 6).map((q) => '<div class="hq">' + esc(q) + '</div>').join('')
+          : '') +
+        '<div class="hfoot"><span>評分是 Day 1 答辯六個面向的平均；同儕回饋皆為匿名。</span>' +
+        '<span>TNDA 前導甄選 · 2026/8/14–15</span></div></div>';
+    }).join('');
+    document.body.classList.add('handout');
+    window.onafterprint = () => document.body.classList.remove('handout');
+    window.print();
+  };
 
   $('brief-text').onclick = () => {
     // 勾了就不標業師姓名——要發給候選人時用。
