@@ -15,7 +15,9 @@
   --fg:#EAEAEA; --fg2:#9E9E9E; --fg3:#6B6B6B;
   --acc:var(--tnda-orange);
 }
-html[data-theme="light"]{
+/* 編組分頁（data-tab="group"）固定淺色：這頁會投影給全場看，亮底比較清楚。
+   其他分頁照 #theme 開關。 */
+html[data-theme="light"], html[data-tab="group"]{
   --bg:#F4F4F4; --rail:#FFFFFF; --s1:#FFFFFF; --s2:#EDEDED;
   --line:#E0E0E0; --line2:#EDEDED;
   --fg:#141414; --fg2:#5A5A5A; --fg3:#8E8E8E;
@@ -474,6 +476,7 @@ function renderTabs(active) {
   });
 }
 function go(k) {
+  document.documentElement.dataset.tab = k;   // 編組分頁靠這個吃淺色
   renderTabs(k);
   TABS.forEach(([n]) => $('pane-' + n).classList.toggle('hide', n !== k));
   ({ score: renderScore, peer: renderPeer, group: renderGroup, day2: renderDay2, brief: renderBrief,
@@ -942,14 +945,14 @@ function renderGroup() {
     '<p class="lede">點左邊選一個人、再點右邊的組放進去；點組裡的人＝移出。' +
     '選了人之後，組卡會標記關係：<b>⇄ 互選</b>、→ 他選了這組的人、← 這組有人選他。' +
     '<b>這個畫面含互選資訊，不要投影——公布請用「公布模式」。</b></p>' +
-    '<div class="row" style="gap:8px;margin-bottom:12px;flex-wrap:wrap">' +
-    '<button class="btn" id="g-trio">帶入三人全互選</button>' +
-    '<button class="btn" id="g-pair">帶入兩人互選</button>' +
-    '<button class="btn" id="g-auto">一鍵排：互選＋分數分層</button>' +
-    '<button class="btn ghost" id="g-clear">清空重來</button>' +
+    '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">' +
+    '<button class="btn inline" id="g-trio">帶入三人全互選</button>' +
+    '<button class="btn inline" id="g-pair">帶入兩人互選</button>' +
+    '<button class="btn inline" id="g-auto">一鍵排：互選＋分數分層</button>' +
+    '<button class="btn ghost inline" id="g-clear">清空重來</button>' +
     '<span style="flex:1"></span>' +
-    '<button class="btn" id="g-out">產生 config 名單</button>' +
-    '<button class="btn primary" id="g-pub">公布模式</button></div>' +
+    '<button class="btn inline" id="g-out">產生 config 名單</button>' +
+    '<button class="btn primary inline" id="g-pub">公布模式</button></div>' +
     warn +
     '<div class="gwrap">' +
     '<div><div class="cap" style="margin-bottom:6px">還沒分組　' + unassigned.length + ' 人</div>' +
